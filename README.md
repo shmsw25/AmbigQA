@@ -3,7 +3,7 @@
 ## Content
 1. [Reference papers](#reference-papers)
 2. [AmbigNQ format](#ambignq-format)
-3. [NQopen format](#nqopen-format)
+3. [NQ-open format](#nq-open-format)
 4. [Optional resources](#optional-resources)
 5. [Evaluation script](#evaluation-script)
 6. [Leaderboard submission guide](#leaderboard-submission-guide)
@@ -25,7 +25,7 @@ If you find the original NQ useful, please cite this paper:
 ```
 
 
-## AmbigNQ
+## AmbigNQ format
 
 The full version contains
 - train.json (47M)
@@ -53,7 +53,7 @@ The light version contains
 `test.json` are in the same format except it does not contain `annotations`, `viewed_doc_titles` and `used_queries`.
 `{train|dev|test}_light.json` as a lighter version of the full version that only contains `id`, `question` and `annotations` (if it is `train` or `dev`).
 
-## NQ open
+## NQ-open format
 
 - nqopen-train.json (9.7M)
 - nqopen-dev.json (1.1M)
