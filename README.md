@@ -33,7 +33,7 @@ The full version contains
 
 The light version contains
 - train_light.json (3.3M)
-- dev_light.json (984K)
+- dev_light.json (977K)
 
 `train.json` and `dev.json` files contains a list of dictionary that represents a single datapoint, with the following keys
 
@@ -55,7 +55,6 @@ The light version contains
 - nqopen-train.json (9.7M)
 - nqopen-dev.json (1.1M)
 - nqopen-test.json (489K)
-- LICENSE
 
 Each file contains a list of dictionary that represents a single datapoint, with the following keys
 
@@ -65,9 +64,9 @@ Each file contains a list of dictionary that represents a single datapoint, with
 
 ## Optional resources
 
-- `enwiki-20200120-pages-articles.xml.bz2`: Wikipedia pages dump from [wikimedia](https://dumps.wikimedia.org/enwiki/20200120/).
-- `enwiki-20200120-redirect.sql.gz`: Wikipedia redirect dump from [wikimedia](https://dumps.wikimedia.org/enwiki/20200120/), in case you want to use hyperlink information.
-- `latest-all.json.bz2`: Wikidata entities dump (20200120) from [wikimedia](https://dumps.wikimedia.org/wikidatawiki/entities/), in case you want to use Wikidata information.
+[comment]: # - `enwiki-20200120-pages-articles.xml.bz2`: Wikipedia pages dump from [wikimedia](https://dumps.wikimedia.org/enwiki/20200120/).
+[comment]: # - `enwiki-20200120-redirect.sql.gz`: Wikipedia redirect dump from [wikimedia](https://dumps.wikimedia.org/enwiki/20200120/), in case you want to use hyperlink information.
+[comment]: # - `latest-all.json.bz2`: Wikidata entities dump (20200120) from [wikimedia](https://dumps.wikimedia.org/wikidatawiki/entities/), in case you want to use Wikidata information.
 - `docs.db`: sqlite db that is consistent with [DrQA](https://github.com/facebookresearch/DrQA); containing plain text only, no disambiguation pages
 - `docs-html.db`: sqlite db that is consistent with [DrQA](https://github.com/facebookresearch/DrQA), containing html, no disambiguation pages
 - (Coming Soon!) Top 100 Wikipedia passages retrieved from Dense Passage Retrieval
@@ -88,7 +87,7 @@ python ambigqa_evaluation_script.py --reference_path {reference data file} --pre
 The prediction should be a json file with a dictionary that has `id` as a key and a prediction dictionary as a value. A prediction dictionary should be in the following format.
 
 - a list of strings (answers), if you only want to compute F1 answer.
-- a list of dictionaries with `question` and `answer` as keys, if you want to compute full metrics.
+- a list of dictionaries with "question" and "answer" as keys, if you want to compute full metrics.
 
 Example:
 
@@ -105,7 +104,7 @@ To compute full metrics
 {
   "-6631842452804060768": [
     {"question": "When was city of new york city founded with dutch protection?", "answer": "1624"},
-    {"question": "When was city of new york city founded with dutch protection?", "answer": "1664"}
+    {"question": "When was city of new york city founded and renamed with english name?", "answer": "1664"}
   ],
   ...
 }
@@ -125,6 +124,7 @@ Please make sure you include the following in the email:
 
 
 Notes
+- Models will be sorted by `F1 answer (all) + F1 edit-f1` (standard) or `F1 answer (all)` (zero-shot).
 - Please allow for up to one week ahead of time before getting the test numbers and/or your numbers appear on the leaderboard.
 - We limit the number of submissions to be 20 per year and 5 per month.
 
