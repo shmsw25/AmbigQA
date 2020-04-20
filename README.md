@@ -30,12 +30,10 @@ If you find the original NQ useful, please cite this paper:
 The full version contains
 - train.json (47M)
 - dev.json (17M)
-- test.json (359K)
 
 The light version contains
 - train_light.json (3.3M)
 - dev_light.json (984K)
-- test_light.json (188K)
 
 `train.json` and `dev.json` files contains a list of dictionary that represents a single datapoint, with the following keys
 
@@ -50,8 +48,7 @@ The light version contains
 - `nq_answer` (a list of strings): a list of annotated answers in the original NQ.
 - `nq_doc_title` (string): an associated Wikipedia page title in the original NQ.
 
-`test.json` are in the same format except it does not contain `annotations`, `viewed_doc_titles` and `used_queries`.
-`{train|dev|test}_light.json` as a lighter version of the full version that only contains `id`, `question` and `annotations` (if it is `train` or `dev`).
+`{train|dev}_light.json` as a lighter version of the full version that only contains `id`, `question` and `annotations`.
 
 ## NQ-open format
 
@@ -116,13 +113,15 @@ To compute full metrics
 
 ## Leaderboard submission guide
 
-Email [Sewon Min](mailto:sewon@cs.washington.edu) with the following:
+Create a prediction file using the questions on NQ-open test data, and email [Sewon Min](mailto:sewon@cs.washington.edu).
 
-- test prediction file. As you are not supposed to know which subset of NQ-open test set is AmbigNQ, your file should contain predictions for all NQ-open test examples.
+Please make sure you include the following in the email:
+
+- test prediction file. Make sure that the format is in line with the official evaluation script. As you are not supposed to know which subset of NQ-open test set is AmbigNQ, your file should contain predictions for all NQ-open test examples.
 - whether the prediction is in the standard setting or zero-shot setting. i.e. whether the model was trained on AmbigNQ train data or not.
 - the name of the model
 - [optional] dev prediction file and expected dev results. This is to double-check there is no unexpected problem.
-- [optional] the institution, link to the paper/code/demo; can be updated later.
+- [optional] the institution, link to the paper/code/demo. They can be updated later.
 
 
 Notes
