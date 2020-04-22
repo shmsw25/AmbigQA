@@ -4,7 +4,7 @@
 1. [Reference papers](#reference-papers)
 2. [AmbigNQ format](#ambignq-format)
 3. [NQ-open format](#nq-open-format)
-4. [Optional resources](#optional-resources)
+4. [Additional resources](#additional-resources)
 5. [Evaluation script](#evaluation-script)
 6. [Leaderboard submission guide](#leaderboard-submission-guide)
 
@@ -62,13 +62,8 @@ Each file contains a list of dictionary that represents a single datapoint, with
 - `question` (string): a question.
 - `answer` (a list of strings): a list of acceptable answer texts.
 
-## Optional resources
+## Additional resources
 
-[comment]: # - `enwiki-20200120-pages-articles.xml.bz2`: Wikipedia pages dump from [wikimedia](https://dumps.wikimedia.org/enwiki/20200120/).
-
-[comment]: # - `enwiki-20200120-redirect.sql.gz`: Wikipedia redirect dump from [wikimedia](https://dumps.wikimedia.org/enwiki/20200120/), in case you want to use hyperlink information.
-
-[comment]: # - `latest-all.json.bz2`: Wikidata entities dump (20200120) from [wikimedia](https://dumps.wikimedia.org/wikidatawiki/entities/), in case you want to use Wikidata information.
 - `docs.db`: sqlite db that is consistent with [DrQA](https://github.com/facebookresearch/DrQA); containing plain text only, no disambiguation pages
 - `docs-html.db`: sqlite db that is consistent with [DrQA](https://github.com/facebookresearch/DrQA), containing html, no disambiguation pages
 - (Coming Soon!) Top 100 Wikipedia passages retrieved from Dense Passage Retrieval

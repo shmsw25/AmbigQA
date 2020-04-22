@@ -36,7 +36,8 @@ class QAPairEvaluation(object):
         self.QG_METRICS_TO_COMPUTE = [m for m in ["bleu1", "bleu2", "bleu3", "bleu4", "rouge-l", "edit-f1"] if any([metric.endswith(m) for metric in self.metrics])]
 
         if len(self.QG_METRICS_TO_COMPUTE)>0:
-            # tokenize
+            # if evaluating QG, tokenize prompt question,
+            # reference question and predicted question
             data_to_tokenize = {}
             for i, ref in enumerate(self.reference):
                 data_to_tokenize["prompt.{}".format(i)] = [{"caption": ref["question"]}]
@@ -86,13 +87,16 @@ class QAPairEvaluation(object):
         promptQuestion = self.reference[idx]["question"]
         annotations = self.reference[idx]["annotations"]
         if type(self.prediction[idx][0])==dict:
+            # prediction contains a set of question-answer pairs
             predictions = [pair["answer"] for pair in self.prediction[idx]]
             questions = [pair["question"] for pair in self.prediction[idx]]
         else:
+            # prediction contains a set of answers
             predictions = self.prediction[idx]
             questions = None
 
         for annotation in annotations:
+            # iterate each annotation and take the maximum metrics
             if annotation['type']=='singleAnswer':
                 f1 = get_f1([annotation['answer']], predictions)
                 for metric in self.metrics:
@@ -103,10 +107,11 @@ class QAPairEvaluation(object):
                 evaluation['F1 answer'] = max(evaluation.get("F1 answer", 0),
                                             get_f1([answer['answer'] for answer in annotation['qaPairs']], predictions))
                 if questions is None:
+                    # skip the below if not evaluating QG
                     continue
-
                 for i, answer in enumerate(annotation["qaPairs"]):
                     for j, prediction in enumerate(predictions):
+                        # get every reference-prediction pair with the correct answer prediction
                         em = get_exact_match(answer['answer'], prediction)
                         if em:
                             qg_evals = get_qg_metrics(questions[j],
@@ -120,6 +125,9 @@ class QAPairEvaluation(object):
                     occupied_answers = [False for _ in annotation["qaPairs"]]
                     occupied_predictions = [False for _ in predictions]
                     tot = 0
+                    # find non-overapping reference-prediction pairs
+                    # that match the answer prediction
+                    # to get the evaluation score
                     for (i, j, e) in curr_matching_pairs:
                         if occupied_answers[i] or occupied_predictions[j]:
                             continue
@@ -132,34 +140,27 @@ class QAPairEvaluation(object):
                 for metric in self.QG_METRICS_TO_COMPUTE:
                     metric_name = "F1 {}".format(metric)
                     if metric_name in self.metrics:
-                        e = _get_qg_f1(lambda x: x[metric][0] if type(x[metric])==list else x[metric])
+                        e = _get_qg_f1(lambda x: x[metric])
                         evaluation[metric_name] = max(evaluation.get(metric_name, 0), e)
             else:
                 raise NotImplementedError()
-
-
 
         assert len(self.metrics)==len(evaluation), (self.metrics, evaluation.keys())
         return evaluation
 
 def get_qg_metrics(generated, question, promptQuestion, metrics):
-    if type(generated)==list:
-        all_evaluations = [get_qg_metrics(_generated, question, promptQuestion, metrics) for _generated in generated]
-        evaluation = {metric: [e[metric] for e in all_evaluations] for metric in metrics}
-        return evaluation
 
     evaluation = {}
 
-    #genereated, question = normalize_answer(generated), normalize_answer(question)
-
+    # computing bleu scores
     for name, score in zip(['bleu{}'.format(i) for i in range(1, 5)],
                            Bleu(4).compute_score(question, generated)[0]):
         if name in metrics:
             evaluation[name] = score
 
-
+    # computing edit-f1 score
     if 'edit-f1' in metrics:
-        def _get_diff(tokens1, tokens2):
+        def _get_edits(tokens1, tokens2):
             allCommon = []
             while True:
                 commons = list(set(tokens1) & set(tokens2))
@@ -175,18 +176,26 @@ def get_qg_metrics(generated, question, promptQuestion, metrics):
             common = ["[FIXED]"+token for token in allCommon]
             return deleted+added #+common
 
-        #promptQuestion = normalize_answer(promptQuestion).split(' ')
-        #generated = normalize_answer(generated).split(' ')
-        #question = normalize_answer(question).split(' ')
+        assert len(generated)==len(promptQuestion)==1
         generated = generated["sent"][0].split(" ")
-        question = question["sent"][0].split(" ")
         promptQuestion = promptQuestion["sent"][0].split(" ")
-        groundtruth = _get_diff(promptQuestion, question)
-        prediction = _get_diff(promptQuestion, generated)
-        if len(groundtruth)==0 or len(prediction)==0:
-            evaluation['edit-f1'] = 0
-        else:
-            evaluation['edit-f1'] = get_f1(prediction, groundtruth, is_equal=lambda x, y: x==y)
+        prediction = _get_edits(promptQuestion, generated)
+        edit_f1 = 0
+        for _question in question["sent"]:
+            _question = _question.split(" ")
+            reference = _get_edits(promptQuestion, _question)
+            # now compare the reference edits and predicted edits
+            if len(reference)==len(prediction)==0:
+                # rarely, reference has no edits after normalization
+                # then, if the prediction also has no edits, it gets full score
+                edit_f1 = 1
+            elif len(reference)==0 or len(prediction)==0:
+                # if only one of them has no edits, zero score
+                edit_f1 = max(edit_f1, 0)
+            else:
+                # otherwise, compute F1 score between prediction and reference
+                edit_f1 = max(edit_f1, get_f1(prediction, reference, is_equal=lambda x, y: x==y))
+        evaluation["edit-f1"] = edit_f1
 
     assert len(metrics)==len(evaluation)
     return evaluation
@@ -279,7 +288,6 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--reference_path', type=str, required=True)
     parser.add_argument('--prediction_path', type=str, required=True)
-
     args = parser.parse_args()
 
     reference = load_reference(args.reference_path)
