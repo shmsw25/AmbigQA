@@ -5,15 +5,15 @@ This is the repository documenting the paper
 by Sewon Min, Julian Michael, Hannaneh Hajishirzi, and Luke Zettlemoyer.
 
 * [Website](https://nlp.cs.washington.edu/ambigqa)
-* [Read the paper](#TODO)
-* [Download the dataset](#TODO)
+* Read the [paper](https://arxiv.org/abs/2004.10645)
+* Download the dataset: [AmbigNQ light ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq_light.zip) / [AmbigNQ full ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq.zip) / [NQ-open](https://nlp.cs.washington.edu/ambigqa/data/nqopen.zip)
 
 ## Content
 1. [Citation](#citation)
 2. [Dataset Contents](#dataset-contents)
-  * [AmbigNQ format](#ambignq)
-  * [NQ-open format](#nq-open)
-  * [Additional resources](#additional-resources)
+    * [AmbigNQ format](#ambignq)
+    * [NQ-open format](#nq-open)
+    * [Additional resources](#additional-resources)
 3. [Evaluation script](#evaluation-script)
 4. [Leaderboard submission guide](#leaderboard-submission-guide)
 
@@ -21,16 +21,22 @@ by Sewon Min, Julian Michael, Hannaneh Hajishirzi, and Luke Zettlemoyer.
 
 If you find the AmbigQA task or AmbigNQ dataset useful, please cite our paper:
 ```
+@article{ min2020ambigqa,
+  title={ AmbigQA: Answering Ambiguous Open-domain Questions },
+  author={ Min, Sewon and Michael, Julian and Hajishirzi, Hannaneh and Zettlemoyer, Luke },
+  journal={ arXiv preprint arXiv:2004.10645 },
+  year={2020}
+}
 ```
 
 Please also make sure to credit and cite the creators of Natural Questions,
 the dataset which we built ours off of:
 ```
-@article{kwiatkowski2019natural,
-  title={Natural questions: a benchmark for question answering research},
-  author={Kwiatkowski, Tom and Palomaki, Jennimaria and Redfield, Olivia and Collins, Michael and Parikh, Ankur and Alberti, Chris and Epstein, Danielle and Polosukhin, Illia and Devlin, Jacob and Lee, Kenton and others},
-  journal={Transactions of the Association for Computational Linguistics},
-  year={2019}
+@article{ kwiatkowski2019natural,
+  title={ Natural questions: a benchmark for question answering research},
+  author={ Kwiatkowski, Tom and Palomaki, Jennimaria and Redfield, Olivia and Collins, Michael and Parikh, Ankur and Alberti, Chris and Epstein, Danielle and Polosukhin, Illia and Devlin, Jacob and Lee, Kenton and others },
+  journal={ Transactions of the Association for Computational Linguistics },
+  year={ 2019 }
 }
 ```
 
@@ -88,7 +94,7 @@ Each file contains a list of dictionaries representing a single datapoint, with 
 
 ## Evaluation script
 
-The evaluation script is at [TODO](#).
+The evaluation script is [here](https://github.com/shmsw25/AmbigQ-private/blob/master/ambigqa_evaluate_script.py).
 It has been tested on Python 3.5 and 3.6.
 
 Step 1. Follow the instruction in [coco-caption](https://github.com/tylin/coco-caption) for setup. If you want to compute F1 answer only, you can skip this.
