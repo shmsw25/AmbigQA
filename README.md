@@ -94,7 +94,7 @@ Each file contains a list of dictionaries representing a single datapoint, with 
 
 ## Evaluation script
 
-The evaluation script is [here](https://github.com/shmsw25/AmbigQ/blob/master/ambigqa_evaluate_script.py).
+The evaluation script is [here](https://github.com/shmsw25/AmbigQA/blob/master/ambigqa_evaluate_script.py).
 It has been tested on Python 3.5 and 3.6.
 
 Step 1. Follow the instruction in [coco-caption](https://github.com/tylin/coco-caption) for setup. If you want to compute F1 answer only, you can skip this.
