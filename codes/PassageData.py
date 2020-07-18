@@ -16,24 +16,25 @@ class PassageData(object):
         self.args = args
         self.data_path = os.path.join(args.dpr_data_dir, "data/wikipedia_split/psgs_w100.tsv.gz")
 
-        if not args.skip_db_load:
+        self.passages = None
+        self.titles = None
+        self.tokenizer = tokenizer
+        self.tokenized_data = None
+
+    def load_db(self):
+        if not self.args.skip_db_load:
             data = []
             with gzip.open(self.data_path, "rb") as f:
                 for line in f:
                     data.append(line.decode().strip().split("\t"))
-                    if args.debug and len(data)==100:
+                    if self.args.debug and len(data)==100:
                         break
             assert all([len(d)==3 for d in data])
             assert data[0]==["id", "text", "title"]
             self.passages = {int(d[0])-1:d[1].lower() for d in data[1:]}
             self.titles = {int(d[0])-1:d[2].lower() for d in data[1:]}
-            logger.info("Loaded {} passages".format(len(self.passages)))
+            self.logger.info("Loaded {} passages".format(len(self.passages)))
 
-        self.tokenizer = tokenizer
-        self.tokenized_data = None
-
-        #self.load_tokenized_data("albert", index=args.db_index)
-        #exit()
 
     def load_tokenized_data(self, model_name, all=False, do_return=False, index=None):
         if all:
@@ -58,6 +59,8 @@ class PassageData(object):
                     tokenized_data = pkl.load(f)
             else:
                 assert not self.args.skip_db_load
+                if self.titles is None or self.passages is None:
+                    self.load_db()
                 # tokenize 2.2M for each thread
                 min_idx = index*2200000
                 max_idx = min(len(self.titles), (index+1)*2200000)
@@ -99,6 +102,8 @@ class PassageData(object):
     def evaluate(self, predictions, answers):
         if self.args.skip_db_load:
             return [0]
+        if self.passages is None:
+            self.load_db()
         assert len(predictions)==len(answers)
         assert not self.args.skip_db_load
         recall = defaultdict(list)

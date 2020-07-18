@@ -1,6 +1,6 @@
 # AmbigQA-Models
 
-*Update as of 07/2020*: Codes for running DPR retrieval, DPR reader and BART reader (SpanSeqGen) on NQ-open and AmbigQA are ready. Stay tuned for Question Generation models!
+**Update as of 07/2020**: Codes for running DPR retrieval, DPR reader and BART reader (SpanSeqGen) on NQ-open and AmbigQA are ready. Stay tuned for Question Generation models!
 
 This repo contains multiple models for open-domain question answering. This code is based on [PyTorch][pytorch] and [HuggingFace Transformers][hf].
 
@@ -14,7 +14,7 @@ This is an original implementation of "Sewon Min, Julian Michael, Hannaneh Hajis
 }
 ```
 
-This also contains a re-implementation of "Vladimir Karpukhin*, Barlas Oguz*, Sewon Min, Patrick Lewis, Ledell Wu, Sergey Edunov, Danqi Chen, Wen-tau Yih. [Dense Passage Retrieval for Open-domain Question Answering. 2020][dpr-paper]", as part of AmbigQA models. The original implementation can be found [here][dpr-code]. This codebase achieves higher accuracy and is more memory efficient (best result achieved with two 32gb GPUs instead of eight; see aggregated results in the last section of this README).
+This also contains a re-implementation of "Vladimir Karpukhin*, Barlas Oguz*, Sewon Min, Patrick Lewis, Ledell Wu, Sergey Edunov, Danqi Chen, Wen-tau Yih. [Dense Passage Retrieval for Open-domain Question Answering. 2020][dpr-paper]", as part of AmbigQA models. The original implementation can be found [here][dpr-code]. This codebase achieves higher accuracy.
 ```
 @article{ karpukhin2020dense,
     title={ Dense Passage Retrieval for Open-domain Question Answering },
@@ -36,7 +36,7 @@ pip install git+https://github.com/huggingface/transformers.git@7b75aa9fa55bee57
 ## Download data
 Let `data_dir` be a directory to save data.
 ```
-python3 download_data.py --resource data.wikipedia_split --output_dir ${data_dir}
+python3 download_data.py --resource data.wikipedia_split --output_dir ${data_dir} # provided by original DPR
 python3 download_data.py --resource data.nqopen --output_dir ${data_dir}
 python3 download_data.py --resource data.ambigqa --output_dir ${data_dir}
 ```
@@ -45,10 +45,9 @@ python3 download_data.py --resource data.ambigqa --output_dir ${data_dir}
 
 For training DPR retrieval, please refer to the [original implementation][dpr-code]. This code is for taking checkpoint from the original implementation, and running inference.
 
-Step 1: Download Wikipedia DB and DPR retrieval checkpoint provided by DPR original implementation.
+Step 1: Download DPR retrieval checkpoint provided by DPR original implementation.
 ```
-python3 download_data.py --resource data.wikipedia_split --output_dir ${data_dir} # Wikipedia DB
-python3 download_data.py --resource checkpoint.retriever.multi.bert-base-encoder --output_dir ${dpr_data_dir} # retrieval checkpoint
+python3 download_data.py --resource checkpoint.retriever.multi.bert-base-encoder --output_dir ${dpr_data_dir}
 ```
 
 Step 2: Run inference to obtain passage vectors.
@@ -59,16 +58,16 @@ done
 ```
 - `--predict_batch_size` of 3200 is good for one 32gb GPU.
 - `--verbose` to print a progress bar
-- This script will tokenize passages in Wikipedia which will takes time. If you want to pre-tokenize first and then launch the job on gpus afterward, please do the following: (1) run the above command first, (2) when the log prints "Finish loading ### bert tokenized data", stop the job, and (3) re-run the above command with specifying `--skip_db_load`.
+- This script will tokenize passages in Wikipedia which will takes time. If you want to pre-tokenize first and then launch the job on gpus afterward, please do the following: (1) run the above command first, (2) when the log prints "Finish loading ### bert tokenized data", kill the job, and (3) re-run the above command.
 
 Each run will take around 1.5 hours with one 32 gpu.
 
 Step 3: Run inference to obtain question vectors and save the retrieval predictions.
 ```
-python3 cli.py --bert_name ber-base-uncased --output_dir out/dpr --do_predict --task dpr --predict_batch_size 3200 --predict_file data/nqopen-{train|dev|test}.json
+python3 cli.py --bert_name ber-base-uncased --output_dir out/dpr --do_predict --task dpr --predict_batch_size 3200 --predict_file data/nqopen/{train|dev|test}.json
 ```
 
-This script will print out recall rate and save the retrieval results as `out/dpr/{train|dev|test|}_predictions.json`.
+This script will print out recall rate and save the retrieval results as `out/dpr/{train|dev|test}_predictions.json`.
 
 Tip1: Running this for the first time regardless of the data split will create DPR index and save it, so that the next runs can reuse them. If you do not want to create DPR index multiple times, you can run on one data split first, and run the others afterward. If you have resource to run them in parallel, it may save time to just run all of them in parallel.
 
@@ -79,10 +78,10 @@ Tip2: If you are fine with not printing the recall rate, you can specify `--skip
 For training on NQ-open, run
 ```
 python3 cli.py --do_train --task qa --output_dir out/nq-span-selection \
-    --train_file data/nqopen-train.json \
-    --predict_file data/nqopen-dev.json \
+    --train_file data/nqopen/train.json \
+    --predict_file data/nqopen/dev.json \
     --bert_name {bert-base-uncased|bert-large-uncased} \
-    --train_batch_size 16 --train_M 8 --predict_batch_size 32 \
+    --train_batch_size 32 --train_M 32 --predict_batch_size 128 \
     --eval_period 2000 --wait_step 10
 ```
 
@@ -93,12 +92,23 @@ python3 cli.py --do_train --task qa --output_dir out/nq-span-selection \
 
 When training is done, run the following command for prediction.
 ```
-python3 cli.py --do_train --task qa --output_dir out/nq-span-selection \
-    --predict_file data/nqopen-{dev|test}.json \
+python3 cli.py --do_predict --task qa --output_dir out/nq-span-selection \
+    --predict_file data/nqopen/{dev|test}.json \
     --bert_name {bert-base-uncased|bert-large-uncased} \
-    --predict_batch_size 32 --eval_period 500
+    --predict_batch_size 32
 ```
 This command runs predictions using `out/nq-span-selection/best-model.pt` by default. If you want to run predictions using another checkpoint, please specify its path by `--checkpoint`.
+
+You can use the similar commands in order to finetune the model on AmbigQA, except specifyinh `--ambigqa`.
+```
+python3 cli.py --do_train --task qa --output_dir out/nq-span-selection \
+    --train_file data/ambigqa/train_light.json \
+    --predict_file data/ambigqa/dev_light.json \
+    --bert_name {bert-base-uncased|bert-large-uncased} \
+    --train_batch_size 32 --train_M 32 --predict_batch_size 32 \
+    --eval_period 500 --wait_step 10 --topk_answer 3 --ambigqa
+```
+
 
 
 ## BART Reader (SpanSeqGen Model)
@@ -114,8 +124,8 @@ done
 
 Then, save passage selection from the trained DPR reader:
 ```
-python3 cli.py --do_train --task qa --output_dir out/nq-span-selection \
-    --predict_file data/nqopen-{train|dev|test}.json \
+python3 cli.py --do_predict --task qa --output_dir out/nq-span-selection \
+    --predict_file data/nqopen/{train|dev|test}.json \
     --bert_name {bert-base-uncased|bert-large-uncased} \
     --predict_batch_size 32 --save_psg_sel_only
 ```
@@ -123,8 +133,8 @@ python3 cli.py --do_train --task qa --output_dir out/nq-span-selection \
 Now, train a model on NQ-open by:
 ```
 python3 cli.py --do_train --task qa --output_dir out/nq-span-seq-gen \
-    --train_file data/nqopen-train.json \
-    --predict_file data/nqopen-dev.json \
+    --train_file data/nqopen/train.json \
+    --predict_file data/nqopen/dev.json \
     --psgs_sel_dir out/nq-span-selection \
     --bert_name bart-large \
     --discard_not_found_answers \
@@ -136,13 +146,13 @@ Next, finetune this model to train on AmbigNQ.
 
 ```
 python3 cli.py --do_train --task qa --output_dir out/ambignq-span-seq-gen \
-    --train_file data/train.json \
-    --predict_file data/dev.json \
+    --train_file data/ambigqa/train_light.json \
+    --predict_file data/ambigqa/dev_light.json \
     --psgs_sel_dir out/nq-span-selection \
     --bert_name bart-large \
     --discard_not_found_answers \
     --train_batch_size 20 --predict_batch_size 40 \
-    --eval_period 500 --wait_step 10
+    --eval_period 500 --wait_step 10 --ambigqa
 ```
 
 ## Hyperparameter details
@@ -161,13 +171,15 @@ python3 cli.py --do_train --task qa --output_dir out/ambignq-span-seq-gen \
 |SpanSeqGen (reported)| 42.0 | 42.2 | 36.4/24.8 | 30.8/20.7 | 39.7/29.3 | 33.5/24.5 |
 |SpanSeqGen (this code)| 43.1 | 45.0 | 35.3/25.9 | 35.8/23.4 | 40.5/27.8 | 36.2/24.6 |
 
-(By default, the models are based on BERT-base and BART-large.)
+Two numbers on AmbigQA indicate F1 score on all questions and F1 score on questions with multiple QA pairs only.
+
+By default, the models are based on BERT-base and BART-large.
 
 *Note (as of 07/2020)*: Note that numbers are slightly different from those reported in the paper, because numbers in the paper are based on experiments with fairseq. We re-implemented the models with Huggingface Transformers, and were able to obtain similar/better numbers. We will update numbers in the paper of the next version.
 
 *Note*: There happen to be two versions of NQ answers which marginally differ in tokenization methods (e.g. `July 15 , 2020` vs. `July 15, 2020` or `2019 - 2020` vs. `2019--2020`).
 Research papers outside Google ([#1][dpr-paper], [#2][ambigqa-paper], [#3][hard-em], [#4][path-retriever], [#5][rag], [#6][colbert], [#7][fusion-decoder], [#8][graph-retriever]) have been using [this version](https://nlp.cs.washington.edu/ambigqa/data/nqopen.zip), and in June 2020 the original NQ/NQ-open authors release the [original version](https://github.com/efficientqa/nq-open) that have been used in research papers from Google ([#1][orqa], [#2][realm], [#3][t5qa]).
-We verified that the performance differences are marginal when applying simple postprocessing (e.g. `text.replace(" - ", "-")`).
+We verified that the performance differences are marginal when applying simple postprocessing (e.g. `text.replace(" - ", "-").replace(" : ", ":")`).
 The numbers reported here as well as codes follow Google's original version. Compared to the previous version, performance difference is 40.6 (original) vs. 40.3 (previous) vs. 40.7 (union of two) on the dev set and 41.6 (original) vs. 41.7 (previous) vs. 41.8 (union of two) on the test set.
 Nonetheless, we advice to use the original version provided by Google in the future.
 

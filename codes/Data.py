@@ -48,7 +48,8 @@ class QAData(object):
         assert type(self.data)==list
 
         if not args.ambigqa:
-            with open("data/{}_id2answers.json".format(self.data_type), "r") as f:
+            id2answer_path = os.path.join("/".join(self.data_path.split("/")[-1]), "{}_id2answers.json".format(self.data_type))
+            with open(id2answer_path, "r") as f:
                 id2answers = json.load(f)
             for i, d in enumerate(self.data):
                 if is_training:

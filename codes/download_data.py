@@ -180,14 +180,14 @@ RESOURCES_MAP = {
 
     # resources provided by AmbigQA
     'data.ambigqa.train_light': {
-        's3_url': 'https://nlp.cs.washington.edu/ambigqa/data/train_light.zip',
+        's3_url': 'https://nlp.cs.washington.edu/ambigqa/data/train_light.json',
         'original_ext': '.json',
         'compressed': False,
         'desc': 'Train file for AmbigQA'
     },
 
     'data.ambigqa.dev_light': {
-        's3_url': 'https://nlp.cs.washington.edu/ambigqa/data/dev_light.zip',
+        's3_url': 'https://nlp.cs.washington.edu/ambigqa/data/dev_light.json',
         'original_ext': '.json',
         'compressed': False,
         'desc': 'Dev file for AmbigQA'
