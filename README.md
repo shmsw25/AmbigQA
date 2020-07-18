@@ -7,6 +7,7 @@ by Sewon Min, Julian Michael, Hannaneh Hajishirzi, and Luke Zettlemoyer.
 * [Website](https://nlp.cs.washington.edu/ambigqa)
 * Read the [paper](https://arxiv.org/abs/2004.10645)
 * Download the dataset: [AmbigNQ light ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq_light.zip) / [AmbigNQ full ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq.zip) / [NQ-open](https://nlp.cs.washington.edu/ambigqa/data/nqopen.zip)
+* **Update (07/2020)**: Try running [baseline codes][codes]
 
 ## Content
 1. [Citation](#citation)
@@ -15,7 +16,8 @@ by Sewon Min, Julian Michael, Hannaneh Hajishirzi, and Luke Zettlemoyer.
     * [NQ-open format](#nq-open)
     * [Additional resources](#additional-resources)
 3. [Evaluation script](#evaluation-script)
-4. [Leaderboard submission guide](#leaderboard-submission-guide)
+4. [Baseline codes](#baseline-codes)
+5. [Leaderboard submission guide](#leaderboard-submission-guide)
 
 ## Citation
 
@@ -130,6 +132,11 @@ To compute full metrics:
 }
 ```
 
+## Baseline codes
+
+Try running [baseline codes][codes] (instructions in its README), which includes DPR retrieval, DPR reader and SpanSeqGen. This includes codes and scripts for both NQ-open and AmbigNQ.
+
+
 ## Leaderboard submission guide
 
 Create a prediction file using the questions on NQ-open test data, and email it to [Sewon Min](mailto:sewon@cs.washington.edu).
@@ -149,6 +156,7 @@ Notes
 - We limit the number of submissions to be 20 per year and 5 per month.
 
 
+[codes]: https://github.com/shmsw25/AmbigQA/tree/master/codes
 
 
 
