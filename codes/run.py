@@ -52,6 +52,8 @@ def run(args, logger):
 
     def _load_from_checkpoint(checkpoint):
         def convert_to_single_gpu(state_dict):
+            if "model_dict" in state_dict:
+                state_dict = state_dict["model_dict"]
             def _convert(key):
                 if key.startswith('module.'):
                     return key[7:]
@@ -62,19 +64,6 @@ def run(args, logger):
         if "bart" in args.bert_name:
             model.resize_token_embeddings(len(tokenizer))
         return model.from_pretrained(None, config=model.config, state_dict=state_dict)
-        '''
-        if "bart" in args.bert_name:
-            def _convert(key, value):
-                if key=="final_logits_bias":
-                    assert tuple(value.shape)==(1, 50266)
-                    return value[:,:50265]
-                if key in ["model.shared.weight", "model.encoder.embed_tokens.weight", "model.decoder.embed_tokens.weight"]:
-                    assert tuple(value.shape)==(50266, 1024)
-                    return value[:50265, :]
-                return value
-            state_dict = {key:_convert(key, value) for key, value in state_dict.items()}
-        return Model.from_pretrained(args.bert_name, state_dict=state_dict)
-        '''
 
     if args.do_train and args.skip_inference:
         dev_data = None
@@ -218,26 +207,24 @@ def inference_dpr(model, dev_data, save_predictions):
     checkpoint = dev_data.args.checkpoint
     assert checkpoint is not None
     import faiss
-    index_path = checkpoint[:checkpoint.index(".")] + ".IndexFlatIP"
+    postfix = "_20200201" if dev_data.args.wiki_2020 else ""
+    index_path = checkpoint[:checkpoint.index(".")] + "{}.IndexFlatIP".format(postfix)
     if os.path.exists(index_path):
         index = faiss.read_index(index_path)
-        #with open(index_path, "rb") as f:
-        #    reader = faiss.PyCallbackIOReader(lambda x: 1234) #lambda size: os.read(f, size))
-        #    index = faiss.read_index(reader)
     else:
         checkpoint = dev_data.args.checkpoint
         # load passage vectors
         index = dev_data.args.db_index
         if index==-1:
             for index in range(10):
-                pvec_path = checkpoint[:checkpoint.index(".")] + ".psgs_w100_{}.npy".format(index)
+                pvec_path = checkpoint[:checkpoint.index(".")] + ".psgs_w100{}_{}.npy".format(postfix, index)
                 assert os.path.exists(pvec_path)
                 if index==0:
                     pvec = np.load(pvec_path)
                 else:
                     pvec = np.concatenate([pvec, np.load(pvec_path)], axis=0)
         else:
-            pvec_path = checkpoint[:checkpoint.index(".")] + ".psgs_w100_{}.npy".format(index)
+            pvec_path = checkpoint[:checkpoint.index(".")] + ".psgs_w100{}_{}.npy".format(postfix, index)
             print (pvec_path)
             if os.path.exists(pvec_path):
                 pvec = np.load(pvec_path)
@@ -257,10 +244,6 @@ def inference_dpr(model, dev_data, save_predictions):
         index = faiss.IndexFlatIP(pvec.shape[1])
         index.add(pvec)
         faiss.write_index(index, index_path)
-        #with open(index_path, "wb") as f:
-        #    writer = faiss.PyCallbackIOWriter(lambda x: 1234) #lambda b: os.write(f, b))
-        #    faiss.write_index(index, writer)
-    # load question vectors
     qvec = _inference(dev_data.dataloader, is_passages=False) #model.inference(dev_data.dataloader, is_passages=False)
     print (qvec.shape)
     D, I = index.search(qvec, 100)
@@ -273,8 +256,6 @@ def inference_dpr(model, dev_data, save_predictions):
 
 def inference_seq2seq(model, dev_data, save_predictions=False):
     predictions = []
-    #bos_token_id = model.config.bos_token_id if model.config.bos_token_id is not None \
-    #    else model.config.decoder_start_token_id
     bos_token_id = dev_data.tokenizer.bos_token_id
     for i, batch in enumerate(dev_data.dataloader):
         with torch.no_grad():
@@ -313,7 +294,12 @@ def inference_span_predictor(model, dev_data, save_predictions=False):
             for start_logit, end_logit, sel_logit in zip(batch_start_logits, batch_end_logits, batch_sel_logits):
                 outputs.append((start_logit, end_logit, sel_logit))
 
-    n_paragraphs = [int(n) for n in dev_data.args.n_paragraphs.split(",")] if save_predictions else None
+    if save_predictions and dev_data.args.n_paragraphs is None:
+        n_paragraphs = [dev_data.args.test_M]
+    elif save_predictions:
+        n_paragraphs = [int(n) for n in dev_data.args.n_paragraphs.split(",")]
+    else:
+        n_paragraphs = None
     predictions = dev_data.decode_span(outputs,
                                        n_paragraphs=n_paragraphs)
     if save_predictions:

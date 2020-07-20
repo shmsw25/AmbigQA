@@ -47,6 +47,7 @@ def main():
     parser.add_argument("--skip_inference", action='store_true')
     parser.add_argument("--skip_db_load", action='store_true')
     parser.add_argument("--db_index", default=-1, type=int)
+    parser.add_argument("--wiki_2020", action='store_true')
 
     ## Model parameters
     parser.add_argument('--bert_name', type=str, default='bert-base-uncased')
@@ -114,7 +115,7 @@ def main():
                         help="Prefix for saving predictions")
     parser.add_argument('--n_paragraphs', type=str, default=None)
     parser.add_argument("--save_psg_sel_only", action='store_true')
-    parser.add_argument('--topk_answer', type=str, default=1)
+    parser.add_argument('--topk_answer', type=int, default=1)
 
     ## Other parameters
     parser.add_argument('--debug', action='store_true',

@@ -48,7 +48,8 @@ class QAData(object):
         assert type(self.data)==list
 
         if not args.ambigqa:
-            id2answer_path = os.path.join("/".join(self.data_path.split("/")[-1]), "{}_id2answers.json".format(self.data_type))
+            id2answer_path = os.path.join("/".join(self.data_path.split("/")[:-1]),
+                                          "{}_id2answers.json".format(self.data_type.replace("train_for_inference", "train")))
             with open(id2answer_path, "r") as f:
                 id2answers = json.load(f)
             for i, d in enumerate(self.data):
@@ -150,7 +151,8 @@ class QAData(object):
             self.load_dpr_data()
 
     def load_dpr_data(self):
-        dpr_retrieval_path = "out/dpr/{}_predictions.json".format(self.data_type)
+        dpr_retrieval_path = "out/dpr/{}_predictions.json".format(
+            self.data_type+"_20200201" if self.args.wiki_2020 else self.data_type)
         postfix = self.tokenizer.__class__.__name__.replace("zer", "zed")
         dpr_tokenized_path = dpr_retrieval_path.replace(".json", "_{}.json".format(postfix))
         if "Bart" in postfix:
@@ -169,7 +171,7 @@ class QAData(object):
             self.logger.info("Start processing DPR data")
             if self.passages.tokenized_data is None:
                 self.passages.load_tokenized_data("bart", all=True)
-            with open(dpr_retrieval_path.replace("train_for_inference", "train"), "r") as f:
+            with open(dpr_retrieval_path, "r") as f:
                 dpr_passages = json.load(f)
                 assert len(dpr_passages)==len(self)
             assert self.args.psg_sel_dir is not None
@@ -264,7 +266,7 @@ class QAData(object):
                 self.tokenized_data = json.load(f)
                 return
         self.logger.info("Start processing DPR data")
-        with open(dpr_retrieval_path.replace("train_for_inference", "train"), "r") as f:
+        with open(dpr_retrieval_path, "r") as f:
             dpr_passages = json.load(f)
 
         if self.args.ambigqa:
@@ -434,8 +436,9 @@ class QAData(object):
 
     def save_predictions(self, predictions):
         assert len(predictions)==len(self), (len(predictions), len(self))
-        save_path = os.path.join(self.args.output_dir, "{}_predictions.json".format(
-            self.data_type if self.args.prefix is None else self.args.prefix))
+        save_path = os.path.join(self.args.output_dir, "{}{}_predictions.json".format(
+            self.data_type if self.args.prefix is None else self.args.prefix,
+            "_20200201" if self.args.wiki_2020 and not self.args.ambigqa else ""))
         if self.args.save_psg_sel_only:
             save_path = save_path.replace("predictions.json", "psg_sel.json")
         with open(save_path, "w") as f:
@@ -446,7 +449,7 @@ class AmbigQAData(QAData):
     def __init__(self, logger, args, data_path, is_training, passages=None):
         super(AmbigQAData, self).__init__(logger, args, data_path, is_training, passages)
 
-        with open("data/nqopen-{}.json".format(self.data_type), "r") as f:
+        with open("/".join(data_path.split("/")[:-2]) + "/nqopen/{}.json".format(self.data_type), "r") as f:
             orig_data = json.load(f)
             id_to_orig_idx = {d["id"]:i for i, d in enumerate(orig_data)}
 
@@ -482,7 +485,8 @@ class AmbigQAData(QAData):
 
     # override
     def load_dpr_data(self):
-        dpr_retrieval_path = "out/dpr/{}_predictions.json".format(self.data_type)
+        dpr_retrieval_path = "out/dpr/{}_predictions.json".format(
+            self.data_type+"_20200201" if self.args.wiki_2020 else self.data_type)
         postfix = self.tokenizer.__class__.__name__.replace("zer", "zed")
         dpr_tokenized_path = dpr_retrieval_path.replace("predictions.json", "ambigqa_predictions_{}.json".format(postfix))
         if "Bart" in postfix:
@@ -502,7 +506,7 @@ class AmbigQAData(QAData):
             return
 
         import itertools
-        self.logger.info("Start processing DPR data")
+        self.logger.info("Start processing DPR dat from {}".format(dpr_retrieval_path))
         if self.passages.tokenized_data is None:
             self.passages.load_tokenized_data("bart", all=True)
 
@@ -635,6 +639,8 @@ class AmbigQAData(QAData):
         else:
             for (prediction, dp) in zip(predictions, self.data):
                 preds = []
+                if type(prediction[0])==list:
+                    prediction = prediction[-1]
                 for p in prediction:
                     if normalize_answer(p["text"]) not in preds:
                         if p["log_softmax"]>np.log(0.05) or len(preds)==0:

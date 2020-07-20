@@ -3,3 +3,8 @@ tmp*
 __pycache__
 */__pycache__
 */*/__pycache__
+*/*.sh
+*/*.err
+*/*.out
+*/out
+

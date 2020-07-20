@@ -14,12 +14,17 @@ class PassageData(object):
     def __init__(self, logger, args, tokenizer):
         self.logger = logger
         self.args = args
-        self.data_path = os.path.join(args.dpr_data_dir, "data/wikipedia_split/psgs_w100.tsv.gz")
+        self.data_path = os.path.join(args.dpr_data_dir,
+                                      "data/wikipedia_split/psgs_w100{}.tsv.gz".format("_20200201" if args.wiki_2020 else ""))
 
         self.passages = None
         self.titles = None
         self.tokenizer = tokenizer
         self.tokenized_data = None
+
+        if self.args.task=="dpr" and args.db_index>-1:
+            self.load_tokenized_data("bart", index=args.db_index)
+            exit()
 
     def load_db(self):
         if not self.args.skip_db_load:
@@ -34,7 +39,6 @@ class PassageData(object):
             self.passages = {int(d[0])-1:d[1].lower() for d in data[1:]}
             self.titles = {int(d[0])-1:d[2].lower() for d in data[1:]}
             self.logger.info("Loaded {} passages".format(len(self.passages)))
-
 
     def load_tokenized_data(self, model_name, all=False, do_return=False, index=None):
         if all:

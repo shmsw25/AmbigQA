@@ -53,7 +53,7 @@ python3 download_data.py --resource checkpoint.retriever.multi.bert-base-encoder
 Step 2: Run inference to obtain passage vectors.
 ```
 for i in 0 1 2 3 4 5 6 7 8 9 ; do \ # for parallelization
-  python3 cli.py --bert_name bert-base-uncased --output_dir out/dpr --do_predict --task dpr --predict_batch_size 3200 --db_index $i \
+  python3 cli.py --do_predict --bert_name bert-base-uncased --output_dir out/dpr --do_predict --task dpr --predict_batch_size 3200 --db_index $i \
 done
 ```
 - `--predict_batch_size` of 3200 is good for one 32gb GPU.
@@ -159,14 +159,14 @@ python3 cli.py --do_train --task qa --output_dir out/ambignq-span-seq-gen \
 
 **On NQ-open:** For BERT-base, we use `train_batch_size=32, train_M=32` (w/ eight 32GB gpus). For BERT-large, we use `train_batch_size=8, train_M=16` (w/ four 32GB gpus). For BART, we use `train_batch_size=24` (w/ four 32GB gpus). For others, we use default hyperparameters.
 
-**On AmbigQA:** For BART, we use `train_batch_size=24, learning_rate=1e-6` (w/ four 32FB gpus).
+**On AmbigQA:** We use `train_batch_size=8` for BERT-base and `train_batch_size=24` for BART. We use `learning_rate=1e-6` for both.
 
 ## Aggregated Results
 
 |   | NQ-open (dev) | NQ-open (test) | AmbigQA zero-shot (dev) | AmbigQA zero-shot (test) | AmbigQA (dev) | AmbigQA (test) |
 |---|---|---|---|---|---|---|
 |DPR (original implementation)| 39.8 | 41.5 | 35.2/26.5 | 30.1/23.2 | 37.1/28.4 | 32.3/24.8 |
-|DPR (this code)| 40.6 | 41.6 | TODO | TODO | TODO | TODO |
+|DPR (this code)| 40.6 | 41.6 | 36.4/24.9 | 31.7/22.4 | 37.6/26.1 | 33.0/23.1 |
 |DPR (this code) w/ BERT-large| 43.2 | 44.3 | - | - | - | - |
 |SpanSeqGen (reported)| 42.0 | 42.2 | 36.4/24.8 | 30.8/20.7 | 39.7/29.3 | 33.5/24.5 |
 |SpanSeqGen (this code)| 43.1 | 45.0 | 35.3/25.9 | 35.8/23.4 | 40.5/27.8 | 36.2/24.6 |
