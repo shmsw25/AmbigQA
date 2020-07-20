@@ -1,7 +1,7 @@
 # AmbigQA/AmbigNQ README
 
 This is the repository documenting the paper
-[AmbigQA: Answering Ambiguous Open-domain Questions](#TODO)
+[AmbigQA: Answering Ambiguous Open-domain Questions](https://arxiv.org/abs/2004.10645)
 by Sewon Min, Julian Michael, Hannaneh Hajishirzi, and Luke Zettlemoyer.
 
 * [Website](https://nlp.cs.washington.edu/ambigqa)
