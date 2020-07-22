@@ -23,6 +23,9 @@ class PassageData(object):
         self.tokenized_data = None
 
         if self.args.task=="dpr" and args.db_index>-1:
+            assert args.bert_name=="bart-large"
+            from transformers import BartTokenizer
+            self.tokenizer = BartTokenizer.from_pretrained("bart-large")
             self.load_tokenized_data("bart", index=args.db_index)
             exit()
 

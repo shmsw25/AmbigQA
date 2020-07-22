@@ -36,7 +36,8 @@ pip install git+https://github.com/huggingface/transformers.git@7b75aa9fa55bee57
 ## Download data
 Let `data_dir` be a directory to save data.
 ```
-python3 download_data.py --resource data.wikipedia_split --output_dir ${data_dir} # provided by original DPR
+python3 download_data.py --resource data.wikipedia_split.psgs_w100 --output_dir ${data_dir} # provided by original DPR
+python3 download_data.py --resource data.wikipedia_split.psgs_w100_20200201 --output_dir ${data_dir} # only for AmbigQA
 python3 download_data.py --resource data.nqopen --output_dir ${data_dir}
 python3 download_data.py --resource data.ambigqa --output_dir ${data_dir}
 ```
@@ -99,17 +100,6 @@ python3 cli.py --do_predict --task qa --output_dir out/nq-span-selection \
 ```
 This command runs predictions using `out/nq-span-selection/best-model.pt` by default. If you want to run predictions using another checkpoint, please specify its path by `--checkpoint`.
 
-You can use the similar commands in order to finetune the model on AmbigQA, except specifyinh `--ambigqa`.
-```
-python3 cli.py --do_train --task qa --output_dir out/nq-span-selection \
-    --train_file data/ambigqa/train_light.json \
-    --predict_file data/ambigqa/dev_light.json \
-    --bert_name {bert-base-uncased|bert-large-uncased} \
-    --train_batch_size 32 --train_M 32 --predict_batch_size 32 \
-    --eval_period 500 --wait_step 10 --topk_answer 3 --ambigqa
-```
-
-
 
 ## BART Reader (SpanSeqGen Model)
 
@@ -142,8 +132,37 @@ python3 cli.py --do_train --task qa --output_dir out/nq-span-seq-gen \
     --eval_period 2000 --wait_step 10
 ```
 
-Next, finetune this model to train on AmbigNQ.
+## AmbigQA Training
 
+In order to experiment on AmbigQA, you can simply repeat the process with NQ-open, with only two differences - (i) specifying `--ambigqa` and `--wiki_2020` at several places and (ii) initialize weights from models trained on NQ-open. Step-by-step instructions are as follows.
+
+First, make DPR retrieval predictions using Wikipedia 2020. You can do so by simply repeating Step 2 and Step 3 of [DPR Retrieval](#dpr-retrieval) with `--wiki_2020` specified.
+```
+for i in 0 1 2 3 4 5 6 7 8 9 ; do \ # for parallelization
+  python3 cli.py --do_predict --bert_name bert-base-uncased --output_dir out/dpr --do_predict --task dpr --predict_batch_size 3200 --db_index $i --wiki_2020 \
+done
+python3 cli.py --bert_name ber-base-uncased --output_dir out/dpr --do_predict --task dpr --predict_batch_size 3200 --predict_file data/nqopen/{train|dev|test}.json --wiki_2020
+```
+
+In order to fine-tune DPR span selection model on AmbigQA, run the training command similar to NQ training command, but with `--ambigqa` and `--wiki2020` specified. We also used smaller `eval_period` as the dataset size is smaller.
+```
+python3 cli.py --do_train --task qa --output_dir out/ambignq-span-selection \
+    --train_file data/ambigqa/train_light.json \
+    --predict_file data/ambigqa/dev_light.json \
+    --bert_name {bert-base-uncased|bert-large-uncased} \
+    --train_batch_size 32 --train_M 32 --predict_batch_size 32 \
+    --eval_period 500 --wait_step 10 --topk_answer 3 --ambigqa --wiki_2020
+```
+
+In order to fine-tune SpanSeqGen on AmbigQA, first run the inference script over DPR to get highly ranked passages, just like we did on NQ.
+```
+python3 cli.py --do_predict --task qa --output_dir out/nq-span-selection \
+    --predict_file data/nqopen/{train|dev|test}.json \
+    --bert_name {bert-base-uncased|bert-large-uncased} \
+    --predict_batch_size 32 --save_psg_sel_only --wiki_2020
+```
+
+Next, train SpanSeqGen on AmbigNQ via the following command, which specifies `--ambigqa` and `--wiki_2020`.
 ```
 python3 cli.py --do_train --task qa --output_dir out/ambignq-span-seq-gen \
     --train_file data/ambigqa/train_light.json \
@@ -152,24 +171,24 @@ python3 cli.py --do_train --task qa --output_dir out/ambignq-span-seq-gen \
     --bert_name bart-large \
     --discard_not_found_answers \
     --train_batch_size 20 --predict_batch_size 40 \
-    --eval_period 500 --wait_step 10 --ambigqa
+    --eval_period 500 --wait_step 10 --ambigqa --wiki_2020
 ```
 
 ## Hyperparameter details
 
 **On NQ-open:** For BERT-base, we use `train_batch_size=32, train_M=32` (w/ eight 32GB gpus). For BERT-large, we use `train_batch_size=8, train_M=16` (w/ four 32GB gpus). For BART, we use `train_batch_size=24` (w/ four 32GB gpus). For others, we use default hyperparameters.
 
-**On AmbigQA:** We use `train_batch_size=8` for BERT-base and `train_batch_size=24` for BART. We use `learning_rate=1e-6` for both.
+**On AmbigQA:** We use `train_batch_size=8` for BERT-base and `train_batch_size=24` for BART. We use `learning_rate=5e-6` for both.
 
 ## Aggregated Results
 
 |   | NQ-open (dev) | NQ-open (test) | AmbigQA zero-shot (dev) | AmbigQA zero-shot (test) | AmbigQA (dev) | AmbigQA (test) |
 |---|---|---|---|---|---|---|
 |DPR (original implementation)| 39.8 | 41.5 | 35.2/26.5 | 30.1/23.2 | 37.1/28.4 | 32.3/24.8 |
-|DPR (this code)| 40.6 | 41.6 | 36.4/24.9 | 31.7/22.4 | 37.6/26.1 | 33.0/23.1 |
+|DPR (this code)| 40.6 | 41.6 | 35.2/23.9 | 29.9/21.4 | 36.8/25.8 | 33.3/23.4 |
 |DPR (this code) w/ BERT-large| 43.2 | 44.3 | - | - | - | - |
 |SpanSeqGen (reported)| 42.0 | 42.2 | 36.4/24.8 | 30.8/20.7 | 39.7/29.3 | 33.5/24.5 |
-|SpanSeqGen (this code)| 43.1 | 45.0 | 35.3/25.9 | 35.8/23.4 | 40.5/27.8 | 36.2/24.6 |
+|SpanSeqGen (this code)| 43.1 | 45.0 | 37.4/26.1 | 33.2/22.6 | 40.1/29.6 | 35.2/25.7 |
 
 Two numbers on AmbigQA indicate F1 score on all questions and F1 score on questions with multiple QA pairs only.
 
@@ -200,7 +219,13 @@ Currently it is only supporting DPR retrieval + DPR reader (Span selection reade
 
 ## Need preprocessed data / pretrained models / predictions?
 
-Due to the storage limit, we cannot provide all preprocessed data / pretrained models. We will provide them based on requests, so please leave issues.
+Click in order to download checkpoints:
+- [DPR Reader trained on NQ (387M)][checkpoint-nq-dpr]
+- [DPR Reader (w/ BERT-large) trained on NQ (1.2G)][checkpoint-nq-dpr-large]
+- [DPR Reader trained on AmbigNQ (387M)][checkpoint-ambignq-dpr]
+- [SpanSeqGen trained on NQ (1.8G)][checkpoint-nq-bart]
+- [SpanSeqGen trained on AmbigNQ (1.8G)][checkpoint-ambignq-bart]
+
 
 
 [ambigqa-paper]: https://arxiv.org/abs/2004.10645
@@ -220,6 +245,15 @@ Due to the storage limit, we cannot provide all preprocessed data / pretrained m
 [orqa]: https://arxiv.org/abs/1906.00300
 [realm]: https://arxiv.org/abs/2002.08909
 [t5qa]: https://arxiv.org/abs/2002.08910
+
+[checkpoint-nq-dpr]: https://nlp.cs.washington.edu/ambigqa/models/nq-bert-base-uncased-32-32-0.zip
+[checkpoint-nq-dpr-large]: https://nlp.cs.washington.edu/ambigqa/models/nq-bert-large-uncased-16-16-0.zip
+[checkpoint-ambignq-dpr]: https://nlp.cs.washington.edu/ambigqa/models/ambignq-bert-base-uncased-8-32-0.zip
+[checkpoint-nq-bart]: https://nlp.cs.washington.edu/ambigqa/models/nq-bart-large-24-0.zip
+[checkpoint-ambignq-bart]: https://nlp.cs.washington.edu/ambigqa/models/ambignq-bart-large-12-0.zip
+
+
+
 
 
 

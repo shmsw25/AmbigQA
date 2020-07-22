@@ -22,7 +22,7 @@ NQ_LICENSE_FILES = [
 ]
 
 RESOURCES_MAP = {
-    # resources provided by DPR
+    # Wikipedia DB 2018/12/20 (provided by DPR)
     'data.wikipedia_split.psgs_w100': {
         's3_url': 'https://dl.fbaipublicfiles.com/dpr/wikipedia_split/psgs_w100.tsv.gz',
         'original_ext': '.tsv.gz',
@@ -30,6 +30,15 @@ RESOURCES_MAP = {
         'desc': 'Entire wikipedia passages set obtain by splitting all pages into 100-word segments (no overlap)'
     },
 
+    # Wikipedia DB 2020/02/01 (provided by DPR)
+    'data.wikipedia_split.psgs_w100_20200201': {
+        's3_url': 'https://nlp.cs.washington.edu/ambigqa/data/psgs_w100_20200201.tsv.gz',
+        'original_ext': '.tsv.gz',
+        'compressed': False,
+        'desc': 'Entire wikipedia passages set obtain by splitting all pages into 100-word segments (no overlap)'
+    },
+
+    # QA data / checkpoints provided by DPR
     'data.retriever.nq-dev': {
         's3_url': 'https://dl.fbaipublicfiles.com/dpr/data/retriever/biencoder-nq-dev.json.gz',
         'original_ext': '.json',
