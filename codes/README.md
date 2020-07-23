@@ -188,7 +188,7 @@ python3 cli.py --do_train --task qa --output_dir out/ambignq-span-seq-gen \
 |DPR (this code)| 40.6 | 41.6 | 35.2/23.9 | 29.9/21.4 | 36.8/25.8 | 33.3/23.4 |
 |DPR (this code) w/ BERT-large| 43.2 | 44.3 | - | - | - | - |
 |SpanSeqGen (reported)| 42.0 | 42.2 | 36.4/24.8 | 30.8/20.7 | 39.7/29.3 | 33.5/24.5 |
-|SpanSeqGen (this code)| 43.1 | 45.0 | 37.4/26.1 | 33.2/22.6 | 40.1/29.6 | 35.2/25.7 |
+|SpanSeqGen (this code)| 43.1 | 45.0 | 37.4/26.1 | 33.2/22.6 | 40.3/29.2 | 35.5/25.8 |
 
 Two numbers on AmbigQA indicate F1 score on all questions and F1 score on questions with multiple QA pairs only.
 

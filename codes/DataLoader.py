@@ -8,7 +8,8 @@ class MySimpleQADataset(Dataset):
                  input_ids, attention_mask,
                  decoder_input_ids=None, decoder_attention_mask=None,
                  in_metadata=None, out_metadata=None,
-                 is_training=False):
+                 is_training=False,
+                 answer_as_prefix=False):
         self.input_ids = torch.LongTensor(input_ids)
         self.attention_mask = torch.LongTensor(attention_mask)
         self.decoder_input_ids = None if decoder_input_ids is None else torch.LongTensor(decoder_input_ids)
@@ -18,6 +19,7 @@ class MySimpleQADataset(Dataset):
         self.out_metadata = list(zip(range(len(decoder_input_ids)), range(1, 1+len(decoder_input_ids)))) \
             if is_training and out_metadata is None else out_metadata
         self.is_training = is_training
+        self.answer_as_prefix = answer_as_prefix
 
         assert len(self.input_ids)==len(self.attention_mask)==self.in_metadata[-1][-1]
         assert not self.is_training or len(self.decoder_input_ids)==len(self.decoder_attention_mask)==self.out_metadata[-1][-1]
@@ -28,6 +30,11 @@ class MySimpleQADataset(Dataset):
     def __getitem__(self, idx):
         if not self.is_training:
             idx = self.in_metadata[idx][0]
+            if self.answer_as_prefix:
+                #assert self.out_metadata[idx][1]-self.out_metadata[idx][0]==1
+                out_idx = self.out_metadata[idx][0]
+                return self.input_ids[idx], self.attention_mask[idx], \
+                    self.decoder_input_ids[out_idx], self.decoder_attention_mask[out_idx]
             return self.input_ids[idx], self.attention_mask[idx]
 
         in_idx = np.random.choice(range(*self.in_metadata[idx]))

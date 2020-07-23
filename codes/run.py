@@ -11,6 +11,7 @@ from Data import QAData, AmbigQAData
 from PassageData import PassageData
 from models.span_predictor import SpanPredictor, AlbertSpanPredictor
 from models.seq2seq import MyBart
+from models.seq2seq_with_prefix import MyBartWithPrefix
 from models.biencoder import MyBiEncoder
 from ambigqa_evaluate_script import get_exact_match
 from IPython import embed
@@ -22,7 +23,7 @@ def run(args, logger):
     if 'bart' in args.bert_name:
         tokenizer = BartTokenizer.from_pretrained(args.bert_name)
         tokenizer.add_tokens(["<SEP>"])
-        Model = MyBart
+        Model = MyBartWithPrefix if args.do_predict and args.nq_answer_as_prefix else MyBart
         Config = BartConfig
         args.append_another_bos = True
     elif 'albert' in args.bert_name:
@@ -259,21 +260,19 @@ def inference_seq2seq(model, dev_data, save_predictions=False):
     bos_token_id = dev_data.tokenizer.bos_token_id
     for i, batch in enumerate(dev_data.dataloader):
         with torch.no_grad():
-            batch = [b.to(torch.device("cuda")) for b in batch]
+            decoder_start_token_id = None if not dev_data.args.nq_answer_as_prefix else \
+                [[model.config.decoder_start_token_id] + tokens[:min(24, tokens.index(dev_data.tokenizer.eos_token_id))] for tokens in batch[2].tolist()]
+            batch = [b.to(torch.device("cuda")) for b in batch[:2]]
             outputs = model.generate(input_ids=batch[0],
-                                    attention_mask=batch[1],
-                                    num_beams=4,
-                                    max_length=20,
-                                    early_stopping=True,)
-                                    #use_cache=True,
-                                    #no_repeat_ngram_size=4,)
-                                    #decoder_start_token_id=bos_token_id)
+                                     attention_mask=batch[1],
+                                     num_beams=4,
+                                     max_length=25,
+                                     early_stopping=True,
+                                     decoder_start_token_id=decoder_start_token_id,
+                                     num_return_sequences=4 if decoder_start_token_id is not None else 1
+                                     )
             for input_, output in zip(batch[0], outputs):
-                pred = dev_data.decode(output)
-                if dev_data.args.verbose and len(predictions)<5:
-                    print (dev_data.decode(input_)[:100])
-                    print (pred)
-                predictions.append(pred)
+                predictions.append(dev_data.decode(output))
     if save_predictions:
         dev_data.save_predictions(predictions)
     return np.mean(dev_data.evaluate(predictions))

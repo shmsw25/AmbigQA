@@ -76,6 +76,8 @@ class QAData(object):
         return [d["answer"] for d in self.data]
 
     def decode(self, tokens):
+        if type(tokens[0])==list:
+            return [self.decode(_tokens) for _tokens in tokens]
         return self.tokenizer.decode(tokens,
                                      skip_special_tokens=True,
                                      clean_up_tokenization_spaces=True).strip().replace(" - ", "-").replace(" : ", ":")
@@ -397,11 +399,12 @@ class QAData(object):
             input_ids, attention_mask, decoder_input_ids, decoder_attention_mask, metadata = self.tokenized_data
             self.dataset = MySimpleQADataset(input_ids,
                                              attention_mask,
-                                             decoder_input_ids if self.is_training else None,
-                                             decoder_attention_mask if self.is_training else None,
+                                             decoder_input_ids if self.is_training or self.args.nq_answer_as_prefix else None,
+                                             decoder_attention_mask if self.is_training or self.args.nq_answer_as_prefix else None,
                                              in_metadata=None,
                                              out_metadata=metadata,
-                                             is_training=self.is_training)
+                                             is_training=self.is_training,
+                                             answer_as_prefix=self.args.nq_answer_as_prefix)
         self.logger.info("Loaded {} examples from {} data".format(len(self.dataset), self.data_type))
 
         if do_return:
@@ -503,6 +506,10 @@ class AmbigQAData(QAData):
 
     # override
     def load_dpr_data_bart(self, dpr_retrieval_path, dpr_tokenized_path):
+
+        if self.is_training and self.args.consider_order_for_multiple_answers:
+            dpr_tokenized_path = dpr_tokenized_path.replace(".json", "_ordered.json")
+
         if os.path.exists(dpr_tokenized_path):
             self.logger.info("Loading DPR data from {}".format(dpr_tokenized_path))
             with open(dpr_tokenized_path, "r") as f:
@@ -605,7 +612,7 @@ class AmbigQAData(QAData):
                     cnt = 0
                     for _answers in itertools.product(*found_answers):
                         _answers = list(_answers)
-                        if not _valid(_answers):
+                        if self.args.consider_order_for_multiple_answers and not _valid(_answers):
                             continue
                         answers = [bos_token_id, bos_token_id]
                         for j, answer in enumerate(_answers):

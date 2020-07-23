@@ -33,40 +33,65 @@ def main():
 
     ## Basic parameters
     parser.add_argument("--task",
-                        default="qa-wo-context",
+                        default="qa",
                         type=str)
     parser.add_argument("--train_file", default="data/nqopen-train.json",
                         type=str)
     parser.add_argument("--predict_file", default="data/nqopen-dev.json",
                         type=str)
     parser.add_argument("--output_dir", default=None, type=str, required=True)
-    parser.add_argument("--dpr_data_dir", default="/checkpoint/sewonmin/dpr", type=str)
+    parser.add_argument("--dpr_data_dir", default="/checkpoint/sewonmin/dpr", type=str,
+                        help="path where you downloaded DPR related files"
+                        "(Wikipedia DB, checkpoints, etc)")
     parser.add_argument("--do_train", action='store_true')
     parser.add_argument("--do_predict", action='store_true')
-    parser.add_argument("--ambigqa", action='store_true')
-    parser.add_argument("--skip_inference", action='store_true')
+    parser.add_argument("--ambigqa", action='store_true',
+                        help="[For AmbigQA] specify if you are experimenting with AmbigQA")
+    parser.add_argument("--skip_inference", action='store_true',
+                        help="Instead of periodically evaluating on the dev set and"
+                        "only storing the best checkpoint, store all checkpoints"
+                        "without evaluation on the dev set;"
+                        "this saves time while requires more disk memory")
     parser.add_argument("--skip_db_load", action='store_true')
     parser.add_argument("--db_index", default=-1, type=int)
-    parser.add_argument("--wiki_2020", action='store_true')
+    parser.add_argument("--wiki_2020", action='store_true',
+                        help="[For AmbigQA] Use Wikipedia dump from 02/01/2020"
+                        "instead of 12/20/2018")
 
     ## Model parameters
     parser.add_argument('--bert_name', type=str, default='bert-base-uncased')
     parser.add_argument("--cache_dir", default="", type=str,
                         help="Where do you want to store the pre-trained models downloaded from s3")
     parser.add_argument("--checkpoint", type=str,
-                        help="Initial checkpoint (usually from a pre-trained BERT model).", \
+                        help="Initial checkpoint; when not specified, it will use pretrained BERT/BART models", \
                         default=None)
     parser.add_argument("--do_lowercase", action='store_true', default=True)
 
     # Preprocessing-related parameters
     parser.add_argument('--max_passage_length', type=int, default=200)
     parser.add_argument('--max_question_length', type=int, default=32)
-    parser.add_argument('--train_M', type=int, default=24)
-    parser.add_argument('--test_M', type=int, default=50)
-    parser.add_argument("--append_another_bos", action='store_true')
+    parser.add_argument('--train_M', type=int, default=24,
+                        help="# of passages / question in DPR reader")
+    parser.add_argument('--test_M', type=int, default=50,
+                        help="# of passages / question in DPR reader")
+    parser.add_argument("--max_n_answers", default=10, type=int)
     parser.add_argument('--n_jobs', type=int, default=12)
-    parser.add_argument("--discard_not_found_answers", action='store_true')
-    parser.add_argument("--psg_sel_dir", type=str, default=None)
+    parser.add_argument("--append_another_bos", action='store_true',
+                        help="For SpanSeqGen, append extra BOS token in the"
+                        "beginning of the sequence (by default, automatically"
+                        "set to `True` when using BART)")
+    parser.add_argument("--psg_sel_dir", type=str, default=None,
+                        help="For SpanSeqGen, DPR reader path which contains"
+                        "passage selection predictions")
+    parser.add_argument("--discard_not_found_answers", action='store_true',
+                        help="For SpanSeqGen, do not learn to generate answers"
+                        "if they are not found in DPR passages")
+    parser.add_argument("--consider_order_for_multiple_answers", action='store_true',
+                        help="[For AmbigQA] Generate answers in the same order"
+                        "as they appear in DPR passages")
+    parser.add_argument("--nq_answer_as_prefix", action='store_true',
+                        help="[For AmbigQA] For co-training, use known answer as prefix"
+                        "to generate extra answers")
 
     # Training-related parameters
     parser.add_argument("--train_batch_size", default=40, type=int,
@@ -92,14 +117,6 @@ def main():
                         help="Linear warmup over warmup_steps.")
     parser.add_argument('--wait_step', type=int, default=10)
 
-    ## My learning parameters
-    parser.add_argument("--max_n_answers", default=10, type=int)
-    parser.add_argument("--loss_type", default="mml", type=str,
-                        help="Learning method for weak supervision setting")
-    parser.add_argument('--tau', type=float, default=12000.0)
-    parser.add_argument("--dependent_learning", default="none", type=str,
-                        help="none|{span|psg|both}-{soft|hard}]")
-
     ## Evaluation-related parameters
     parser.add_argument("--n_best_size", default=1, type=int,
                         help="The total number of n-best predictions to generate in the nbest_predictions.json output file.")
@@ -112,10 +129,13 @@ def main():
     parser.add_argument('--eval_period', type=int, default=400,
                         help="Evaluate & save model")
     parser.add_argument('--prefix', type=str, default=None,
-                        help="Prefix for saving predictions")
-    parser.add_argument('--n_paragraphs', type=str, default=None)
-    parser.add_argument("--save_psg_sel_only", action='store_true')
-    parser.add_argument('--topk_answer', type=int, default=1)
+                        help="Prefix for saving predictions; split name (e.g. `dev` or `test`) if not specified")
+    parser.add_argument('--n_paragraphs', type=str, default=None,
+                        help="A list of numbers separated by comma, for ablations on number of passages per question (e.g. `20,50,100`)")
+    parser.add_argument("--save_psg_sel_only", action='store_true',
+                        help="For DPR reader, only save the passage selection predictions without span predictions (mainly for preprocessing for SpanSeqGen)")
+    parser.add_argument('--topk_answer', type=int, default=1,
+                        help="# of top answers per question to save")
 
     ## Other parameters
     parser.add_argument('--debug', action='store_true',

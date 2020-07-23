@@ -25,6 +25,7 @@ class MyBart(BartForConditionalGeneration):
             _decoder_input_ids = decoder_input_ids.clone()
             #print (input_ids[0,:10].detach().cpu().tolist())
             #print (_decoder_input_ids[0].detach().cpu().tolist())
+
         outputs = self.model(
             input_ids,
             attention_mask=attention_mask,
