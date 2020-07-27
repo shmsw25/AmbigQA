@@ -205,6 +205,7 @@ class QAData(object):
                 offset = 0
                 end_of_question = curr_input_ids.index(self.tokenizer.eos_token_id)+1
                 input_ids[idx] = curr_input_ids[:end_of_question]
+                attention_mask[idx] = curr_attention_mask[:end_of_question]
                 # 7.75 approximately
                 while len(input_ids[idx])<1024:
                     assert dpr_input_ids[offset][0] == bos_token_id
@@ -569,6 +570,7 @@ class AmbigQAData(QAData):
             offset = 0
             end_of_question = curr_input_ids.index(eos_token_id)+1
             input_ids[idx] = curr_input_ids[:end_of_question]
+            attention_mask[idx] = curr_attention_mask[:end_of_question]
             while len(input_ids[idx])<1024:
                 assert dpr_input_ids[offset][0] == bos_token_id
                 assert len(dpr_input_ids[offset])==len(dpr_attention_mask[offset])
