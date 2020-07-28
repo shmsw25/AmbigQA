@@ -678,11 +678,15 @@ class MyBartWithPrefix(MyBart):
             if eos_token_id is not None and all(
                 (token_id % vocab_size).item() != eos_token_id for token_id in next_tokens[batch_idx]
             ):
-                assert torch.all(
-                    next_scores[batch_idx, :num_beams] == beam_scores.view(batch_size, num_beams)[batch_idx]
-                ), "If batch_idx is not done, final next scores: {} have to equal to accumulated beam_scores: {}".format(
-                    next_scores[:, :num_beams][batch_idx], beam_scores.view(batch_size, num_beams)[batch_idx],
-                )
+                try:
+                    assert torch.all(
+                        next_scores[batch_idx, :num_beams] == beam_scores.view(batch_size, num_beams)[batch_idx]
+                    ), "If batch_idx is not done, final next scores: {} have to equal to accumulated beam_scores: {}".format(
+                        next_scores[:, :num_beams][batch_idx], beam_scores.view(batch_size, num_beams)[batch_idx],
+                    )
+                except Exception:
+                    print (batch_idx, decoder_start_token_id[batch_idx])
+                    from IPython import embed; embed(); exit()
 
             # need to add best num_beams hypotheses to generated hyps
             for beam_id in range(num_beams):

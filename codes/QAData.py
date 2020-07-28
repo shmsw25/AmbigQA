@@ -16,7 +16,7 @@ from util import decode_span_batch
 
 # for evaluation
 from ambigqa_evaluate_script import normalize_answer, get_exact_match, get_f1, get_qg_metrics
-#from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.bleu.bleu import Bleu
 
 class QAData(object):
 
@@ -83,9 +83,13 @@ class QAData(object):
                                      clean_up_tokenization_spaces=True).strip().replace(" - ", "-").replace(" : ", ":")
 
     def decode_span(self, outputs, n_paragraphs):
-        assert len(self.data)==len(self.tokenized_data["positive_input_ids"])==\
-            len(self.tokenized_data["positive_input_mask"])==\
-            len(outputs)
+        try:
+            assert len(self.data)==len(self.tokenized_data["positive_input_ids"])==\
+                len(self.tokenized_data["positive_input_mask"])==len(outputs), \
+                (len(self.data), len(self.tokenized_data["positive_input_ids"]),
+                len(self.tokenized_data["positive_input_mask"]), len(outputs))
+        except Exception:
+            from IPython import embed; embed(); exit()
         return decode_span_batch(list(zip(self.tokenized_data["positive_input_ids"],
                                           self.tokenized_data["positive_input_mask"])),
                                  outputs,
@@ -165,6 +169,7 @@ class QAData(object):
             raise NotImplementedError()
 
     def load_dpr_data_bart(self, dpr_retrieval_path, dpr_tokenized_path):
+        self.logger.info("{}\n{}".format(dpr_retrieval_path, dpr_tokenized_path))
         if os.path.exists(dpr_tokenized_path):
             self.logger.info("Loading DPR data from {}".format(dpr_tokenized_path))
             with open(dpr_tokenized_path, "r") as f:
@@ -173,13 +178,15 @@ class QAData(object):
             self.logger.info("Start processing DPR data")
             if self.passages.tokenized_data is None:
                 self.passages.load_tokenized_data("bart", all=True)
-            with open(dpr_retrieval_path.replace("train", "train_for_inference"), "r") as f:
+            if "train_for_inference" not in dpr_retrieval_path:
+                dpr_retrieval_path = dpr_retrieval_path.replace("train", "train_for_inference")
+            with open(dpr_retrieval_path, "r") as f:
                 dpr_passages = json.load(f)
                 assert len(dpr_passages)==len(self)
             assert self.args.psg_sel_dir is not None
             psg_sel_fn = os.path.join(self.args.psg_sel_dir,
                                       "{}{}_psg_sel.json".format(
-                                          self.data_type.replace("train", "train_for_inference"),
+                                          self.data_type.replace("train", "train_for_inference") if "for_inference" not in self.data_type else self.data_type,
                                           "_20200201" if self.args.wiki_2020 else ""))
             self.logger.info("Loading passage selection from DPR reader: {}".format(psg_sel_fn))
             with open(psg_sel_fn, "r") as f:
@@ -197,7 +204,6 @@ class QAData(object):
                 assert tokens[0]==tokens[1]==bos_token_id and tokens[-1]==self.tokenizer.eos_token_id
                 return tokens[2:-1]
 
-            new_input_ids, new_attention_mask, new_decoder_input_ids, new_decoder_attention_mask, new_metadata = [], [], [], [], []
             for idx, (curr_input_ids, curr_attention_mask, curr_metadata, dpr_ids) in enumerate(zip(
                     input_ids, attention_mask, metadata, dpr_passages)):
                 dpr_input_ids = [self.passages.tokenized_data["input_ids"][_id] for _id in dpr_ids]
@@ -206,7 +212,6 @@ class QAData(object):
                 end_of_question = curr_input_ids.index(self.tokenizer.eos_token_id)+1
                 input_ids[idx] = curr_input_ids[:end_of_question]
                 attention_mask[idx] = curr_attention_mask[:end_of_question]
-                # 7.75 approximately
                 while len(input_ids[idx])<1024:
                     assert dpr_input_ids[offset][0] == bos_token_id
                     assert len(dpr_input_ids[offset])==len(dpr_attention_mask[offset])
@@ -214,12 +219,13 @@ class QAData(object):
                     input_ids[idx] += dpr_input_ids[offset][1:]
                     attention_mask[idx] += dpr_attention_mask[offset][1:]
                     offset += 1
+                assert len(input_ids)==len(attention_mask)
                 input_ids[idx] = input_ids[idx][:1024]
                 attention_mask[idx] = attention_mask[idx][:1024]
 
             with open(dpr_tokenized_path, "w") as f:
                 json.dump([input_ids, attention_mask], f)
-            self.logger.info("Finish saving tokenized DPR data")
+            self.logger.info("Finish saving tokenized DPR data at {}".format(dpr_tokenized_path))
 
         self.tokenized_data[0] = input_ids
         self.tokenized_data[1] = attention_mask
@@ -475,6 +481,7 @@ class AmbigQAData(QAData):
             self.data[i]["answer"] = answers
             self.data[i]["orig_idx"] = id_to_orig_idx[d["id"]]
 
+        self.metric = "F1"
         self.SEP = "<SEP>"
 
     # override
@@ -486,7 +493,8 @@ class AmbigQAData(QAData):
             for answer in _answers:
                 metadata[-1].append([])
                 for _answer in answer:
-                    assert type(_answer)==list and type(_answer[0])==str
+                    assert len(_answer)>0, _answers
+                    assert type(_answer)==list and type(_answer[0])==str, _answers
                     metadata[-1][-1].append((len(new_answers), len(new_answers)+len(_answer)))
                     new_answers += _answer
         return new_answers, metadata
@@ -496,7 +504,7 @@ class AmbigQAData(QAData):
         dpr_retrieval_path = "out/dpr/{}_predictions.json".format(
             self.data_type+"_20200201" if self.args.wiki_2020 else self.data_type)
         postfix = self.tokenizer.__class__.__name__.replace("zer", "zed")
-        dpr_tokenized_path = dpr_retrieval_path.replace("predictions.json", "ambigqa_predictions_{}.json".format(postfix))
+        dpr_tokenized_path = self.data_path.replace(".json", "_dpr{}.json".format("_20200201" if self.args.wiki_2020 else ""))
         if "Bart" in postfix:
             return self.load_dpr_data_bart(dpr_retrieval_path, dpr_tokenized_path)
         metadata, new_metadata = self.tokenized_data[-1], []
@@ -510,6 +518,9 @@ class AmbigQAData(QAData):
 
         if self.is_training and self.args.consider_order_for_multiple_answers:
             dpr_tokenized_path = dpr_tokenized_path.replace(".json", "_ordered.json")
+
+        self.logger.info(dpr_retrieval_path)
+        self.logger.info(dpr_tokenized_path)
 
         if os.path.exists(dpr_tokenized_path):
             self.logger.info("Loading DPR data from {}".format(dpr_tokenized_path))
@@ -560,8 +571,8 @@ class AmbigQAData(QAData):
             new_decoder_input_ids, new_decoder_attention_mask, new_metadata = [], [], []
         else:
             new_decoder_input_ids, new_decoder_attention_mask, new_metadata = None, None, None
-        for idx, (curr_input_ids, curr_attention_mask, curr_decoder_input_ids, curr_decoder_attention_mask, curr_metadata, dpr_ids) in enumerate(zip(
-                input_ids, attention_mask, decoder_input_ids, decoder_attention_mask, metadata, dpr_passages)):
+        for idx, (curr_input_ids, curr_attention_mask, curr_metadata, dpr_ids) in enumerate(zip(
+                input_ids, attention_mask, metadata, dpr_passages)):
 
             dpr_input_ids = [self.passages.tokenized_data["input_ids"][_id] for _id in dpr_ids]
             dpr_attention_mask = [self.passages.tokenized_data["attention_mask"][_id] for _id in dpr_ids]

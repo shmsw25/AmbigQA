@@ -24,10 +24,20 @@ This also contains a re-implementation of "Vladimir Karpukhin*, Barlas Oguz*, Se
 }
 ```
 
-Please see [Results section](#Aggregated-results) in this README to compare various models & see updated numbers.
+## Content
+1. [Installation](#installation)
+2. [Download data](#download-data)
+3. Instructions for Training & Testing
+    * [DPR Retrieval](#dpr-retrieval)
+    * [DPR Reader (Span Selection Model)](#dpr-reader-span-selection-model)
+    * [SpanSeqGen (BART Reader)](#spanseqgen-bart-reader)
+    * [Finetuning on AmbigQA](#finetuning-on-ambigqa)
+4. [Results](#results)
+    * [Results with less resources](#results-with-less-resources)
+5. [Interactive Demo for Question Answering](#interactive)
+6. [Pretrained model checkpoint](#need-preprocessed-data--pretrained-models--predictions)
 
 ## Installation
-
 ```
 pip install torch==1.1.0
 pip install git+https://github.com/huggingface/transformers.git@7b75aa9fa55bee577e2c7403301ed31103125a35
@@ -43,7 +53,6 @@ python3 download_data.py --resource data.ambigqa --output_dir ${data_dir}
 ```
 
 ## DPR Retrieval
-
 For training DPR retrieval, please refer to the [original implementation][dpr-code]. This code is for taking checkpoint from the original implementation, and running inference.
 
 Step 1: Download DPR retrieval checkpoint provided by DPR original implementation.
@@ -101,7 +110,7 @@ python3 cli.py --do_predict --task qa --output_dir out/nq-span-selection \
 This command runs predictions using `out/nq-span-selection/best-model.pt` by default. If you want to run predictions using another checkpoint, please specify its path by `--checkpoint`.
 
 
-## BART Reader (SpanSeqGen Model)
+## SpanSeqGen (BART Reader)
 
 Note: this model is different from BART closed-book QA model (implemented [here][bart-closed-book-qa]), because this model reads DPR retrieved passages as input.
 
@@ -132,7 +141,7 @@ python3 cli.py --do_train --task qa --output_dir out/nq-span-seq-gen \
     --eval_period 2000 --wait_step 10
 ```
 
-## AmbigQA Training
+## Finetuning on AmbigQA
 
 In order to experiment on AmbigQA, you can simply repeat the process with NQ-open, with only two differences - (i) specifying `--ambigqa` and `--wiki_2020` at several places and (ii) initialize weights from models trained on NQ-open. Step-by-step instructions are as follows.
 
@@ -162,7 +171,7 @@ python3 cli.py --do_predict --task qa --output_dir out/nq-span-selection \
     --predict_batch_size 32 --save_psg_sel_only --wiki_2020
 ```
 
-Next, train SpanSeqGen on AmbigNQ via the following command, which specifies `--ambigqa` and `--wiki_2020`.
+Next, train SpanSeqGen on AmbigNQ via the following command, which specifies `--ambigqa`, `--wiki_2020` and `--max_answer_length 25`.
 ```
 python3 cli.py --do_train --task qa --output_dir out/ambignq-span-seq-gen \
     --train_file data/ambigqa/train_light.json \
@@ -171,7 +180,7 @@ python3 cli.py --do_train --task qa --output_dir out/ambignq-span-seq-gen \
     --bert_name bart-large \
     --discard_not_found_answers \
     --train_batch_size 20 --predict_batch_size 40 \
-    --eval_period 500 --wait_step 10 --ambigqa --wiki_2020
+    --eval_period 500 --wait_step 10 --ambigqa --wiki_2020 --max_answer_length 25
 ```
 
 ## Hyperparameter details
@@ -180,7 +189,7 @@ python3 cli.py --do_train --task qa --output_dir out/ambignq-span-seq-gen \
 
 **On AmbigQA:** We use `train_batch_size=8` for BERT-base and `train_batch_size=24` for BART. We use `learning_rate=5e-6` for both.
 
-## Aggregated Results
+## Results
 
 |   | NQ-open (dev) | NQ-open (test) | AmbigQA zero-shot (dev) | AmbigQA zero-shot (test) | AmbigQA (dev) | AmbigQA (test) |
 |---|---|---|---|---|---|---|
@@ -202,6 +211,26 @@ We verified that the performance differences are marginal when applying simple p
 The numbers reported here as well as codes follow Google's original version. Compared to the previous version, performance difference is 40.6 (original) vs. 40.3 (previous) vs. 40.7 (union of two) on the dev set and 41.6 (original) vs. 41.7 (previous) vs. 41.8 (union of two) on the test set.
 Nonetheless, we advice to use the original version provided by Google in the future.
 
+### Results with less resources
+
+The readers are not very sensitive to hyperparamters (`train_batch_size` and `train_M`). In case you want to experiment with less resources and want to check the reproducibility, here are our results depending on the number of 32gb GPUs.
+
+DPR with BERT-base:
+| Num. of 32gb GPU(s) | (`train_batch_size`, `train_M`) | NQ-open (dev) | NQ-open (test) |
+|---|---|---|---|
+| 1 | (8, 16) | 40.5 | 41.4 |
+| 2 | (16, 16) | 40.9 | 41.1 |
+| 4 | (16, 32) | 41.2 | 41.1 |
+| 8 | (32, 32) | 40.6 | 41.6 |
+
+DPR with BERT-large:
+| Num. of 32gb GPU(s) | (`train_batch_size`, `train_M`) | NQ-open (dev) | NQ-open (test) |
+|---|---|---|---|
+| 2 | (8, 8) | 42.0 | 43.4 |
+| 4 | (8, 16) | 43.2 | 44.3 |
+| 8 | (16, 16) | 42.2 | 43.2 |
+
+
 ## Interactive
 
 You can run DPR interactively as follows.
@@ -215,10 +244,10 @@ print (interactive_dpr.predict(question, topk_answer=5, only_text=True))
 
 For details, please refer to `InteractiveDPR.py`
 
-Currently it is only supporting DPR retrieval + DPR reader (Span selection reader). Please stay tuned for SpanSeqGen.
 
 ## Need preprocessed data / pretrained models / predictions?
 
+**Question Answering**
 Click in order to download checkpoints:
 - [DPR Reader trained on NQ (387M)][checkpoint-nq-dpr]
 - [DPR Reader (w/ BERT-large) trained on NQ (1.2G)][checkpoint-nq-dpr-large]
@@ -226,7 +255,8 @@ Click in order to download checkpoints:
 - [SpanSeqGen trained on NQ (1.8G)][checkpoint-nq-bart]
 - [SpanSeqGen trained on AmbigNQ (1.8G)][checkpoint-ambignq-bart]
 
-
+**Question Disambiguation**
+Coming soon!
 
 [ambigqa-paper]: https://arxiv.org/abs/2004.10645
 [dpr-paper]: https://arxiv.org/abs/2004.04906

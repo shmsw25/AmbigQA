@@ -32,8 +32,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     ## Basic parameters
-    parser.add_argument("--task",
-                        default="qa",
+    parser.add_argument("--task", default="qa", choices=["dpr", "qa", "qg"],
                         type=str)
     parser.add_argument("--train_file", default="data/nqopen-train.json",
                         type=str)
@@ -65,6 +64,7 @@ def main():
     parser.add_argument("--checkpoint", type=str,
                         help="Initial checkpoint; when not specified, it will use pretrained BERT/BART models", \
                         default=None)
+    parser.add_argument("--resume_global_step", type=int, default=0)
     parser.add_argument("--do_lowercase", action='store_true', default=True)
 
     # Preprocessing-related parameters
@@ -194,9 +194,6 @@ def main():
     if args.do_predict:
         if not args.predict_file:
             raise ValueError("If `do_predict` is True, then `predict_file` must be specified.")
-
-    assert args.task in [
-        "dpr", "qa"]
 
     logger.info("Using {} gpus".format(args.n_gpu))
 

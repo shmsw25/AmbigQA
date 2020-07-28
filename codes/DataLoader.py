@@ -21,7 +21,8 @@ class MySimpleQADataset(Dataset):
         self.is_training = is_training
         self.answer_as_prefix = answer_as_prefix
 
-        assert len(self.input_ids)==len(self.attention_mask)==self.in_metadata[-1][-1]
+        assert len(self.input_ids)==len(self.attention_mask)==self.in_metadata[-1][-1], \
+            (len(self.input_ids), len(self.attention_mask), self.in_metadata[-1])
         assert not self.is_training or len(self.decoder_input_ids)==len(self.decoder_attention_mask)==self.out_metadata[-1][-1]
 
     def __len__(self):
@@ -41,6 +42,32 @@ class MySimpleQADataset(Dataset):
         out_idx = np.random.choice(range(*self.out_metadata[idx]))
         return self.input_ids[in_idx], self.attention_mask[in_idx], \
             self.decoder_input_ids[out_idx], self.decoder_attention_mask[out_idx]
+
+class MySimpleQADatasetForPair(Dataset):
+    def __init__(self,
+                 input_ids, attention_mask,
+                 decoder_input_ids=None, decoder_attention_mask=None, metadata=None,
+                 is_training=False):
+        self.input_ids = torch.LongTensor(input_ids)
+        self.attention_mask = torch.LongTensor(attention_mask)
+        self.decoder_input_ids = None if decoder_input_ids is None else torch.LongTensor(decoder_input_ids)
+        self.decoder_attention_mask = None if decoder_attention_mask is None else torch.LongTensor(decoder_attention_mask)
+        self.metadata = metadata
+        self.is_training = is_training
+
+        assert len(self.input_ids)==len(self.attention_mask)
+        assert not self.is_training or len(self.input_ids)==len(self.decoder_input_ids)==len(self.decoder_attention_mask)==self.metadata[-1][-1]
+        assert self.metadata[-1][-1]==len(self.input_ids)
+
+    def __len__(self):
+        return len(self.metadata) if self.is_training else len(self.input_ids)
+
+    def __getitem__(self, idx):
+        if not self.is_training:
+            return self.input_ids[idx], self.attention_mask[idx]
+        idx = np.random.choice(range(*self.metadata[idx]))
+        return self.input_ids[idx], self.attention_mask[idx], \
+            self.decoder_input_ids[idx], self.decoder_attention_mask[idx]
 
 class MyQADataset(Dataset):
     def __init__(self, data,

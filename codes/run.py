@@ -7,14 +7,14 @@ from transformers import BartTokenizer, AlbertTokenizer, BertTokenizer
 from transformers import BartConfig, AlbertConfig, BertConfig
 from transformers import AdamW, get_linear_schedule_with_warmup
 
-from Data import QAData, AmbigQAData
+from QAData import QAData, AmbigQAData
+from QGData import QGData, AmbigQGData
 from PassageData import PassageData
+
 from models.span_predictor import SpanPredictor, AlbertSpanPredictor
 from models.seq2seq import MyBart
 from models.seq2seq_with_prefix import MyBartWithPrefix
 from models.biencoder import MyBiEncoder
-from ambigqa_evaluate_script import get_exact_match
-from IPython import embed
 
 def run(args, logger):
 
@@ -46,10 +46,9 @@ def run(args, logger):
     passages = PassageData(logger, args, tokenizer)
 
     def _getQAData():
-        if args.ambigqa:
-            return AmbigQAData #if args.is_seq2seq else AmbigQAData
-        else:
-            return QAData #if args.is_seq2seq else QAData
+        if args.task=="qg":
+            return AmbigQGData if args.ambigqa else QGData
+        return AmbigQAData if args.ambigqa else QAData
 
     def _load_from_checkpoint(checkpoint):
         def convert_to_single_gpu(state_dict):
@@ -64,6 +63,7 @@ def run(args, logger):
         model = Model(Config.from_pretrained(args.bert_name))
         if "bart" in args.bert_name:
             model.resize_token_embeddings(len(tokenizer))
+        logger.info("Loading from {}".format(checkpoint))
         return model.from_pretrained(None, config=model.config, state_dict=state_dict)
 
     if args.do_train and args.skip_inference:
@@ -116,6 +116,10 @@ def train(args, logger, model, train_data, dev_data, optimizer, scheduler):
     train_losses = []
     best_accuracy = -1
     stop_training=False
+
+    for _ in range(args.resume_global_step):
+        optimizer.step()
+        scheduler.step()
 
     logger.info("Start training!")
     for epoch in range(int(args.num_train_epochs)):
@@ -258,15 +262,22 @@ def inference_dpr(model, dev_data, save_predictions):
 def inference_seq2seq(model, dev_data, save_predictions=False):
     predictions = []
     bos_token_id = dev_data.tokenizer.bos_token_id
+    if dev_data.args.task=="qa":
+        max_answer_length = dev_data.args.max_answer_length
+        assert max_answer_length>=25 or not dev_data.args.ambigqa
+    else:
+        max_answer_length = dev_data.args.max_question_length
+    if dev_data.args.verbose:
+        dev_data.dataloader = tqdm(dev_data.dataloader)
     for i, batch in enumerate(dev_data.dataloader):
         with torch.no_grad():
             decoder_start_token_id = None if not dev_data.args.nq_answer_as_prefix else \
-                [[model.config.decoder_start_token_id] + tokens[:min(24, tokens.index(dev_data.tokenizer.eos_token_id))] for tokens in batch[2].tolist()]
+                [[model.config.decoder_start_token_id] + tokens[:min(max_answer_length-2, tokens.index(dev_data.tokenizer.eos_token_id))] for tokens in batch[2].tolist()]
             batch = [b.to(torch.device("cuda")) for b in batch[:2]]
             outputs = model.generate(input_ids=batch[0],
                                      attention_mask=batch[1],
                                      num_beams=4,
-                                     max_length=25,
+                                     max_length=max_answer_length,
                                      early_stopping=True,
                                      decoder_start_token_id=decoder_start_token_id,
                                      num_return_sequences=4 if decoder_start_token_id is not None else 1

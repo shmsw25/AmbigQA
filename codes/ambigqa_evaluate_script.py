@@ -4,12 +4,12 @@ import json
 import string
 import argparse
 import numpy as np
-#from collections import Counter, defaultdict
+from collections import Counter, defaultdict
 
-#from pycocoevalcap.tokenizer.ptbtokenizer import PTBTokenizer
-#from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.tokenizer.ptbtokenizer import PTBTokenizer
+from pycocoevalcap.bleu.bleu import Bleu
 
-#tokenizer = PTBTokenizer()
+tokenizer = PTBTokenizer()
 
 class QAPairEvaluation(object):
 
