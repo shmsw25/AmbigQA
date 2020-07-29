@@ -100,8 +100,7 @@ def decode_span(feature, tokenizer, start_logits_list, end_logits_list, sel_logi
     if n_paragraphs is None:
         return sorted_nbest[:topk_answer] if topk_answer>-1 else sorted_nbest
     else:
-        return [[pred for pred in nbest if pred['passage_index']<n][:topk_answer] \
-                for n in n_paragraphs]
+        return [[pred for pred in sorted_nbest if pred['passage_index']<n] for n in n_paragraphs]
 
 def _compute_log_softmax(scores):
     """Compute softmax probability over raw logits."""
