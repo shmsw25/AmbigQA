@@ -1,4 +1,4 @@
-# AmbigQA-Models
+# AmbigQA Baseline Models
 
 **Update as of 07/2020**: Codes for running DPR retrieval, DPR reader and BART reader (SpanSeqGen) on NQ-open and AmbigQA are ready. Stay tuned for Question Generation models!
 
@@ -53,7 +53,7 @@ python3 download_data.py --resource data.ambigqa --output_dir ${data_dir}
 ```
 
 ## DPR Retrieval
-For training DPR retrieval, please refer to the [original implementation][dpr-code]. This code is for taking checkpoint from the original implementation, and running inference.
+For training DPR retrieval, please refer to the [original implementation][dpr-code]. This code is for taking checkpoint from the original implementation, and running inference. 
 
 Step 1: Download DPR retrieval checkpoint provided by DPR original implementation.
 ```
@@ -246,6 +246,9 @@ For details, please refer to `InteractiveDPR.py`
 
 
 ## Need preprocessed data / pretrained models / predictions?
+
+**DPR**
+- [DPR predictions on NQ](https://nlp.cs.washington.edu/ambigqa/models/nq-dpr.zip)
 
 **Question Answering**
 Click in order to download checkpoints:
