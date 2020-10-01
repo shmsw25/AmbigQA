@@ -57,7 +57,7 @@ For training DPR retrieval, please refer to the [original implementation][dpr-co
 
 Step 1: Download DPR retrieval checkpoint provided by DPR original implementation.
 ```
-python3 download_data.py --resource checkpoint.retriever.multi.bert-base-encoder --output_dir ${dpr_data_dir}
+python3 download_data.py --resource checkpoint.retriever.multiset.bert-base-encoder --output_dir ${dpr_data_dir}
 ```
 
 Step 2: Run inference to obtain passage vectors.
