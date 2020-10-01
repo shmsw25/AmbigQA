@@ -1,7 +1,7 @@
 # AmbigQA/AmbigNQ README
 
 This is the repository documenting the paper
-[AmbigQA: Answering Ambiguous Open-domain Questions](https://arxiv.org/abs/2004.10645)
+[AmbigQA: Answering Ambiguous Open-domain Questions](https://arxiv.org/abs/2004.10645) (EMNLP 2020)
 by Sewon Min, Julian Michael, Hannaneh Hajishirzi, and Luke Zettlemoyer.
 
 * [Website](https://nlp.cs.washington.edu/ambigqa)
@@ -23,11 +23,11 @@ by Sewon Min, Julian Michael, Hannaneh Hajishirzi, and Luke Zettlemoyer.
 
 If you find the AmbigQA task or AmbigNQ dataset useful, please cite our paper:
 ```
-@article{ min2020ambigqa,
-  title={ AmbigQA: Answering Ambiguous Open-domain Questions },
-  author={ Min, Sewon and Michael, Julian and Hajishirzi, Hannaneh and Zettlemoyer, Luke },
-  journal={ arXiv preprint arXiv:2004.10645 },
-  year={2020}
+@inproceedings{ min2020ambigqa,
+    title={ {A}mbig{QA}: Answering Ambiguous Open-domain Questions },
+    author={ Min, Sewon and Michael, Julian and Hajishirzi, Hannaneh and Zettlemoyer, Luke },
+    booktitle={ EMNLP },
+    year={2020}
 }
 ```
 
