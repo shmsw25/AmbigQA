@@ -38,9 +38,16 @@ This also contains a re-implementation of "Vladimir Karpukhin*, Barlas Oguz*, Se
 6. [Pretrained model checkpoint](#need-preprocessed-data--pretrained-models--predictions)
 
 ## Installation
+Tested with python 3.6.12
 ```
 pip install torch==1.1.0
 pip install git+https://github.com/huggingface/transformers.git@7b75aa9fa55bee577e2c7403301ed31103125a35
+pip install wget
+```
+
+Also, move `pycocoevalcap` to current directory
+```
+mv ../pycocoevalcap pycocoevalcap
 ```
 
 ## Download data
@@ -49,11 +56,12 @@ Let `data_dir` be a directory to save data.
 python3 download_data.py --resource data.wikipedia_split.psgs_w100 --output_dir ${data_dir} # provided by original DPR
 python3 download_data.py --resource data.wikipedia_split.psgs_w100_20200201 --output_dir ${data_dir} # only for AmbigQA
 python3 download_data.py --resource data.nqopen --output_dir ${data_dir}
+python3 download_data.py --resource data.gold_passages_info.nq_train --output_dir ${data_dir}
 python3 download_data.py --resource data.ambigqa --output_dir ${data_dir}
 ```
 
 ## DPR Retrieval
-For training DPR retrieval, please refer to the [original implementation][dpr-code]. This code is for taking checkpoint from the original implementation, and running inference. 
+For training DPR retrieval, please refer to the [original implementation][dpr-code]. This code is for taking checkpoint from the original implementation, and running inference.
 
 Step 1: Download DPR retrieval checkpoint provided by DPR original implementation.
 ```
@@ -63,18 +71,18 @@ python3 download_data.py --resource checkpoint.retriever.multiset.bert-base-enco
 Step 2: Run inference to obtain passage vectors.
 ```
 for i in 0 1 2 3 4 5 6 7 8 9 ; do \ # for parallelization
-  python3 cli.py --do_predict --bert_name bert-base-uncased --output_dir out/dpr --do_predict --task dpr --predict_batch_size 3200 --db_index $i \
+  python3 cli.py --do_predict --bert_name bert-base-uncased --output_dir out/dpr --dpr_data_dir ${data_dir} --do_predict --task dpr --predict_batch_size 3200 --db_index $i ; \
 done
 ```
 - `--predict_batch_size` of 3200 is good for one 32gb GPU.
 - `--verbose` to print a progress bar
-- This script will tokenize passages in Wikipedia which will takes time. If you want to pre-tokenize first and then launch the job on gpus afterward, please do the following: (1) run the above command first, (2) when the log prints "Finish loading ### bert tokenized data", kill the job, and (3) re-run the above command.
+- This script will tokenize passages in Wikipedia which will takes time. If you want to pre-tokenize first and then launch the job on gpus afterward, please do the following: (1) run the above command with `--do_prepro_only`, and (2) re-run the above command without `--do_prepro_only`.
 
 Each run will take around 1.5 hours with one 32 gpu.
 
 Step 3: Run inference to obtain question vectors and save the retrieval predictions.
 ```
-python3 cli.py --bert_name ber-base-uncased --output_dir out/dpr --do_predict --task dpr --predict_batch_size 3200 --predict_file data/nqopen/{train|dev|test}.json
+python3 cli.py --bert_name ber-base-uncased --output_dir out/dpr --dpr_data_dir ${data_dir} --do_predict --task dpr --predict_batch_size 3200 --predict_file data/nqopen/{train|dev|test}.json
 ```
 
 This script will print out recall rate and save the retrieval results as `out/dpr/{train|dev|test}_predictions.json`.
@@ -88,6 +96,7 @@ Tip2: If you are fine with not printing the recall rate, you can specify `--skip
 For training on NQ-open, run
 ```
 python3 cli.py --do_train --task qa --output_dir out/nq-span-selection \
+    --dpr_data_dir ${data_dir} \
     --train_file data/nqopen/train.json \
     --predict_file data/nqopen/dev.json \
     --bert_name {bert-base-uncased|bert-large-uncased} \
@@ -103,6 +112,7 @@ python3 cli.py --do_train --task qa --output_dir out/nq-span-selection \
 When training is done, run the following command for prediction.
 ```
 python3 cli.py --do_predict --task qa --output_dir out/nq-span-selection \
+    --dpr_data_dir ${data_dir} \
     --predict_file data/nqopen/{dev|test}.json \
     --bert_name {bert-base-uncased|bert-large-uncased} \
     --predict_batch_size 32
@@ -117,13 +127,14 @@ Note: this model is different from BART closed-book QA model (implemented [here]
 First, tokenize passage vectors.
 ```
 for i in 0 1 2 3 4 5 6 7 8 9 ; do \ # for parallelization
-  python3 cli.py --bert_name bart-large --output_dir out/dpr --do_predict --task dpr --predict_batch_size 3200 --db_index $i \
+  python3 cli.py --bert_name bart-large --output_dir out/dpr --dpr_data_dir ${data_dir} --do_predict --do_prepro_only --task dpr --predict_batch_size 3200 --db_index $i \
 done
 ```
 
 Then, save passage selection from the trained DPR reader:
 ```
 python3 cli.py --do_predict --task qa --output_dir out/nq-span-selection \
+    --dpr_data_dir ${data_dir} \
     --predict_file data/nqopen/{train|dev|test}.json \
     --bert_name {bert-base-uncased|bert-large-uncased} \
     --predict_batch_size 32 --save_psg_sel_only
@@ -132,9 +143,10 @@ python3 cli.py --do_predict --task qa --output_dir out/nq-span-selection \
 Now, train a model on NQ-open by:
 ```
 python3 cli.py --do_train --task qa --output_dir out/nq-span-seq-gen \
+    --dpr_data_dir ${data_dir} \
     --train_file data/nqopen/train.json \
     --predict_file data/nqopen/dev.json \
-    --psgs_sel_dir out/nq-span-selection \
+    --psg_sel_dir out/nq-span-selection \
     --bert_name bart-large \
     --discard_not_found_answers \
     --train_batch_size 20 --predict_batch_size 40 \
@@ -148,14 +160,15 @@ In order to experiment on AmbigQA, you can simply repeat the process with NQ-ope
 First, make DPR retrieval predictions using Wikipedia 2020. You can do so by simply repeating Step 2 and Step 3 of [DPR Retrieval](#dpr-retrieval) with `--wiki_2020` specified.
 ```
 for i in 0 1 2 3 4 5 6 7 8 9 ; do \ # for parallelization
-  python3 cli.py --do_predict --bert_name bert-base-uncased --output_dir out/dpr --do_predict --task dpr --predict_batch_size 3200 --db_index $i --wiki_2020 \
+  python3 cli.py --do_predict --bert_name bert-base-uncased --output_dir out/dpr --dpr_data_dir ${data_dir} --do_predict --task dpr --predict_batch_size 3200 --db_index $i --wiki_2020 \
 done
-python3 cli.py --bert_name ber-base-uncased --output_dir out/dpr --do_predict --task dpr --predict_batch_size 3200 --predict_file data/nqopen/{train|dev|test}.json --wiki_2020
+python3 cli.py --bert_name ber-base-uncased --output_dir out/dpr --dpr_data_dir ${data_dir} --do_predict --task dpr --predict_batch_size 3200 --predict_file data/nqopen/{train|dev|test}.json --wiki_2020
 ```
 
 In order to fine-tune DPR span selection model on AmbigQA, run the training command similar to NQ training command, but with `--ambigqa` and `--wiki2020` specified. We also used smaller `eval_period` as the dataset size is smaller.
 ```
 python3 cli.py --do_train --task qa --output_dir out/ambignq-span-selection \
+    --dpr_data_dir ${data_dir} \
     --train_file data/ambigqa/train_light.json \
     --predict_file data/ambigqa/dev_light.json \
     --bert_name {bert-base-uncased|bert-large-uncased} \
@@ -166,6 +179,7 @@ python3 cli.py --do_train --task qa --output_dir out/ambignq-span-selection \
 In order to fine-tune SpanSeqGen on AmbigQA, first run the inference script over DPR to get highly ranked passages, just like we did on NQ.
 ```
 python3 cli.py --do_predict --task qa --output_dir out/nq-span-selection \
+    --dpr_data_dir ${data_dir} \
     --predict_file data/nqopen/{train|dev|test}.json \
     --bert_name {bert-base-uncased|bert-large-uncased} \
     --predict_batch_size 32 --save_psg_sel_only --wiki_2020
@@ -174,9 +188,10 @@ python3 cli.py --do_predict --task qa --output_dir out/nq-span-selection \
 Next, train SpanSeqGen on AmbigNQ via the following command, which specifies `--ambigqa`, `--wiki_2020` and `--max_answer_length 25`.
 ```
 python3 cli.py --do_train --task qa --output_dir out/ambignq-span-seq-gen \
+    --dpr_data_dir ${data_dir} \
     --train_file data/ambigqa/train_light.json \
     --predict_file data/ambigqa/dev_light.json \
-    --psgs_sel_dir out/nq-span-selection \
+    --psg_sel_dir out/nq-span-selection \
     --bert_name bart-large \
     --discard_not_found_answers \
     --train_batch_size 20 --predict_batch_size 40 \

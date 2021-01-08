@@ -34,9 +34,9 @@ def main():
     ## Basic parameters
     parser.add_argument("--task", default="qa", choices=["dpr", "qa", "qg"],
                         type=str)
-    parser.add_argument("--train_file", default="data/nqopen-train.json",
+    parser.add_argument("--train_file", default="data/nqopen/train.json",
                         type=str)
-    parser.add_argument("--predict_file", default="data/nqopen-dev.json",
+    parser.add_argument("--predict_file", default="data/nqopen/dev.json",
                         type=str)
     parser.add_argument("--output_dir", default=None, type=str, required=True)
     parser.add_argument("--dpr_data_dir", default="/checkpoint/sewonmin/dpr", type=str,
@@ -44,6 +44,7 @@ def main():
                         "(Wikipedia DB, checkpoints, etc)")
     parser.add_argument("--do_train", action='store_true')
     parser.add_argument("--do_predict", action='store_true')
+    parser.add_argument("--do_prepro_only", action='store_true')
     parser.add_argument("--ambigqa", action='store_true',
                         help="[For AmbigQA] specify if you are experimenting with AmbigQA")
     parser.add_argument("--skip_inference", action='store_true',

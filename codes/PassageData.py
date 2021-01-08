@@ -36,13 +36,19 @@ class PassageData(object):
             self.titles = {int(d[0])-1:d[2].lower() for d in data[1:]}
             self.logger.info("Loaded {} passages".format(len(self.passages)))
 
-    def load_tokenized_data(self, model_name, all=False, do_return=False, index=None):
+    def load_tokenized_data(self, model_name, all=False, do_return=False, subset=None, index=None):
         if all:
-            tokenized_data = {"input_ids": [], "attention_mask": []}
             for index in range(10):
-                curr_tokenized_data = self.load_tokenized_data(model_name, all=False, do_return=True, index=index)
-                tokenized_data["input_ids"] += curr_tokenized_data["input_ids"]
-                tokenized_data["attention_mask"] += curr_tokenized_data["attention_mask"]
+                curr_tokenized_data = self.load_tokenized_data(model_name, all=False, do_return=True, subset=subset, index=index)
+                if index==0:
+                    tokenized_data = curr_tokenized_data
+                elif subset is None:
+                    tokenized_data["input_ids"] += curr_tokenized_data["input_ids"]
+                    tokenized_data["attention_mask"] += curr_tokenized_data["attention_mask"]
+                else:
+                    tokenized_data["input_ids"].update(curr_tokenized_data["input_ids"])
+                    tokenized_data["attention_mask"].update(curr_tokenized_data["attention_mask"])
+            final_tokenized_data = tokenized_data
         else:
             index=self.args.db_index if index is None else index
             assert 0<=index<10
@@ -74,10 +80,22 @@ class PassageData(object):
                     pkl.dump({"input_ids": tokenized_data["input_ids"],
                               "attention_mask": tokenized_data["attention_mask"]}, f)
 
-        self.tokenized_data = tokenized_data
-        self.logger.info("Finish loading {} {} tokenized data".format(len(tokenized_data["input_ids"]), model_name))
+            if subset is None:
+                final_tokenized_data = tokenized_data
+            else:
+                # only keep 2200000*i
+                start, end = 2200000*index, 2200000*(index+1)
+                final_tokenized_data = {"input_ids": {}, "attention_mask": {}}
+                for passage_idx in subset:
+                    if start<=passage_idx<end:
+                        final_tokenized_data["input_ids"][passage_idx] = tokenized_data["input_ids"][passage_idx-start]
+                        final_tokenized_data["attention_mask"][passage_idx] = tokenized_data["attention_mask"][passage_idx-start]
+
+        self.logger.info("Finish loading {} {} tokenized data".format(len(final_tokenized_data["input_ids"]), model_name))
         if do_return:
-            return tokenized_data
+            return final_tokenized_data
+        else:
+            self.tokenized_data = final_tokenized_data
 
     def load_dataset(self, model_name, do_return=False):
         if self.tokenized_data is None:

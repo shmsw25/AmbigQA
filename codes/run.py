@@ -38,7 +38,6 @@ def run(args, logger):
         raise NotImplementedError()
 
     if args.dpr:
-        tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         Model = MyBiEncoder
         args.checkpoint = os.path.join(args.dpr_data_dir, "checkpoint/retriever/multiset/bert-base-encoder.cp")
         assert not args.do_train, "Training DPR is not supported yet"
@@ -71,6 +70,9 @@ def run(args, logger):
     else:
         dev_data = _getQAData()(logger, args, args.predict_file, False, passages)
         dev_data.load_dataset(tokenizer)
+        if args.do_prepro_only:
+            dev_data.load_dpr_data()
+            exit()
         dev_data.load_dataloader()
 
     if args.do_train:

@@ -83,13 +83,10 @@ class QAData(object):
                                      clean_up_tokenization_spaces=True).strip().replace(" - ", "-").replace(" : ", ":")
 
     def decode_span(self, outputs, n_paragraphs):
-        try:
-            assert len(self.data)==len(self.tokenized_data["positive_input_ids"])==\
+        assert len(self.data)==len(self.tokenized_data["positive_input_ids"])==\
                 len(self.tokenized_data["positive_input_mask"])==len(outputs), \
                 (len(self.data), len(self.tokenized_data["positive_input_ids"]),
                 len(self.tokenized_data["positive_input_mask"]), len(outputs))
-        except Exception:
-            from IPython import embed; embed(); exit()
         return decode_span_batch(list(zip(self.tokenized_data["positive_input_ids"],
                                           self.tokenized_data["positive_input_mask"])),
                                  outputs,
@@ -157,10 +154,12 @@ class QAData(object):
             self.load_dpr_data()
 
     def load_dpr_data(self):
+        data_type = self.data_type.replace("train_for_inference", "train")
         dpr_retrieval_path = "out/dpr/{}_predictions.json".format(
-            self.data_type+"_20200201" if self.args.wiki_2020 else self.data_type)
+            data_type+"_20200201" if self.args.wiki_2020 else data_type)
         postfix = self.tokenizer.__class__.__name__.replace("zer", "zed")
-        dpr_tokenized_path = dpr_retrieval_path.replace(".json", "_{}.json".format(postfix))
+        dpr_tokenized_path = "out/dpr/{}_predictions_{}.json".format(
+            self.data_type+"_20200201" if self.args.wiki_2020 else self.data_type, postfix)
         if "Bart" in postfix:
             return self.load_dpr_data_bart(dpr_retrieval_path, dpr_tokenized_path)
         elif "Bert" in postfix or "Albert" in postfix:
@@ -175,24 +174,27 @@ class QAData(object):
             with open(dpr_tokenized_path, "r") as f:
                 input_ids, attention_mask = json.load(f)
         else:
-            self.logger.info("Start processing DPR data")
-            if self.passages.tokenized_data is None:
-                self.passages.load_tokenized_data("bart", all=True)
-            if "train_for_inference" not in dpr_retrieval_path:
-                dpr_retrieval_path = dpr_retrieval_path.replace("train", "train_for_inference")
             with open(dpr_retrieval_path, "r") as f:
                 dpr_passages = json.load(f)
                 assert len(dpr_passages)==len(self)
             assert self.args.psg_sel_dir is not None
+            data_type = self.data_type.replace("train", "train_for_inference") \
+                if "for_inference" not in self.data_type else self.data_type
             psg_sel_fn = os.path.join(self.args.psg_sel_dir,
                                       "{}{}_psg_sel.json".format(
-                                          self.data_type.replace("train", "train_for_inference") if "for_inference" not in self.data_type else self.data_type,
+                                          data_type,
                                           "_20200201" if self.args.wiki_2020 else ""))
             self.logger.info("Loading passage selection from DPR reader: {}".format(psg_sel_fn))
             with open(psg_sel_fn, "r") as f:
                 fg_passages = json.load(f)
                 assert len(fg_passages)==len(dpr_passages)
                 dpr_passages = [[psgs[i] for i in fg_psgs] for psgs, fg_psgs in zip(dpr_passages, fg_passages)]
+
+            self.logger.info("Start processing DPR data")
+            if self.passages.tokenized_data is None:
+                subset = set([p_idx for retrieved in dpr_passages for p_idx in retrieved])
+                self.passages.load_tokenized_data("bart", subset=subset, all=True)
+
             input_ids, attention_mask, decoder_input_ids, decoder_attention_mask, metadata = self.tokenized_data
             assert len(dpr_passages)==len(input_ids)==len(attention_mask)
             bos_token_id = self.tokenizer.bos_token_id
@@ -278,9 +280,9 @@ class QAData(object):
             self.logger.info("Loading DPR data from {}".format(dpr_tokenized_path))
             with open(dpr_tokenized_path, "r") as f:
                 self.tokenized_data = json.load(f)
-                return
+            return
         self.logger.info("Start processing DPR data")
-        with open(dpr_retrieval_path.replace("train", "train_for_inference"), "r") as f:
+        with open(dpr_retrieval_path, "r") as f:
             dpr_passages = json.load(f)
 
         if self.args.ambigqa:
@@ -292,9 +294,13 @@ class QAData(object):
                 assert len(gold_titles)==len(self)
 
         input_ids, attention_mask, answer_input_ids, _, metadata = self.tokenized_data
+        eos_token_id = self.tokenizer.eos_token_id if "Albert" in dpr_tokenized_path else self.tokenizer.sep_token_id
+        assert eos_token_id is not None
         assert len(dpr_passages)==len(input_ids)==len(attention_mask)==len(metadata)
         if self.passages.tokenized_data is None:
-            self.passages.load_tokenized_data("albert" if "Albert" in dpr_tokenized_path else "bert", all=True)
+            subset = set([p_idx for retrieved in dpr_passages for p_idx in retrieved])
+            self.passages.load_tokenized_data("albert" if "Albert" in dpr_tokenized_path else "bert",
+                                              subset=subset, all=True)
         features = defaultdict(list)
         max_n_answers = self.args.max_n_answers
         oracle_exact_matches = []
@@ -334,7 +340,7 @@ class QAData(object):
                 _positives = [j for j, spans in enumerate(detected_spans) if len(spans)>0]
                 if len(_positives)==0:
                     continue
-                positives = [j for j in _positives if normalize_answer(self.decode(p_input_ids[j][:p_input_ids[j].index(self.tokenizer.eos_token_id)]))==gold_title]
+                positives = [j for j in _positives if normalize_answer(self.decode(p_input_ids[j][:p_input_ids[j].index(eos_token_id)]))==gold_title]
                 positive_contains_gold_title.append(len(positives)>0)
                 if len(positives)==0:
                     positives = _positives[:20]
