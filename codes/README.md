@@ -273,6 +273,18 @@ Click in order to download checkpoints:
 - [SpanSeqGen trained on NQ (1.8G)][checkpoint-nq-bart]
 - [SpanSeqGen trained on AmbigNQ (1.8G)][checkpoint-ambignq-bart]
 
+**Passage Reranking from DPR Reader**
+- [Reranking result (37M)](https://nlp.cs.washington.edu/ambigqa/models/reranking_results.zip): contain reranking for NQ train/dev/test (aligned with [Wikipedia 2018](https://github.com/shmsw25/AmbigQA/blob/master/codes/download_data.py#L26) and AmbigQA train/dev (aligned with [Wikipedia 2020](https://github.com/shmsw25/AmbigQA/blob/master/codes/download_data.py#L34)).
+
+For a sanity check, the recall accuracy should be as follows. (For AmbigQA, macro-average of recall.)
+
+| k | NQ train | NQ dev | NQ test | AmbigQA train | AmbigQA dev |
+|---|---|---|---|---|---|
+| 1     |80.4|59.8|59.4|58.3|51.8|
+| 5     |86.8|75.9|76.3|72.7|70.0|
+| 10    |87.8|79.9|80.8|76.2|74.8|
+| 100   |89.2|86.2|87.4|81.2|83.1|
+
 **Question Disambiguation**
 Coming soon!
 
