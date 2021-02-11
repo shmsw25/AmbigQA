@@ -87,10 +87,16 @@ class InteractiveDPR(object):
                 spans = offset_mapping[o["passage_index"]][o["start_index"]+o["start_offset"]:o["end_index"]+1+o["start_offset"]]
                 char_start, char_end = spans[0][0]-len(title)-7, spans[-1][-1]-len(title)-7
 
+                if char_end >= char_start >= 0:
+                    text = text[:char_start] + "<span class='red'><strong>" + text[char_start:char_end] + "</strong></span>" + text[char_end:]
+                else:
+                    char_start, char_end = spans[0][0], spans[-1][-1]
+                    title = title[:char_start] + "<span class='red'><strong>" + title[char_start:char_end] + "</strong></span>"
+
                 curr_output.append({
                     "passage_index": o["passage_index"],
                     "title": title,
-                    "passage": text[:char_start] + "<span class='red'><strong>" + text[char_start:char_end] + "</strong></span>" + text[char_end:],
+                    "passage": text,
                     "softmax": {"passage": np.exp(o["log_softmax"][0]),
                                 "span": np.exp(o["log_softmax"][1]),
                                 "joint": np.exp(np.sum(o["log_softmax"]))}})
@@ -121,12 +127,9 @@ class InteractiveDPR(object):
 
 if __name__=='__main__':
     dpr = InteractiveDPR()
-
-    with open("data/nqopen-dev.json", "r") as f:
-        data = json.load(f)
-    output = dpr.run(data[0]["question"])
-    from IPython import embed; embed()
-
+    question = "Men's triple jump olympic champion in 2000?"
+    output = dpr.run(question)
+    from IPython import embed ; embed()
 
 
 

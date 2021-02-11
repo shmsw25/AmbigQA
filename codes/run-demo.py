@@ -13,6 +13,7 @@ if not debug:
 with open("data/nqopen-dev.json", "r") as f:
     data = json.load(f)
 questions = [d["question"] for d in data]
+questions = [question[0].upper() + question[1:] + "?" for question in questions]
 
 @app.route('/')
 def main():

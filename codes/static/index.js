@@ -107,8 +107,8 @@
           <span class='footnote-sm'><em>P(a|q)</em>=` + result[i]["softmax"]["joint"].toFixed(2) + `</span>
           <span class='footnote-sm'><em>P(a|p,q)</em>=` + result[i]["softmax"]["span"].toFixed(2) + `</span>
           <span class='footnote'><em>P(p|q)</em>=` + result[i]["softmax"]["passage"].toFixed(2) + `</span>
-          <span class='footnote'>Retrieval rank: #` + (result[i]["passage_index"]+1) + `</span>`;
-        var header = "<strong>" + result[i]["title"] + `</strong>` + metadata;
+          <span class='footnote'>Retrieval ranking: #` + (result[i]["passage_index"]+1) + `</span>`;
+        var header = "Title: <em>" + result[i]["title"] + `</em>` + metadata;
         answer_field.appendChild(getPanel(header, "... " + result[i]["passage"] + " ..."));
       }
     });
