@@ -68,9 +68,9 @@ class InteractiveDPR(object):
             token_type_ids.append(input_data["token_type_ids"])
             offsets_mapping.append(input_data["offset_mapping"])
 
-        assert len(input_ids)==len(attention_mask)==len(token_type_ids)==len(questions)==len(offsets_mapping)
-        assert np.all([len(l)==self.k and np.all([len(li)==max_length for li in l])
-                       for l in input_ids+attention_mask+token_type_ids])
+        #assert len(input_ids)==len(attention_mask)==len(token_type_ids)==len(questions)==len(offsets_mapping)
+        #assert np.all([len(l)==self.k and np.all([len(li)==max_length for li in l])
+        #               for l in input_ids+attention_mask+token_type_ids])
 
         start_logits, end_logits, sel_logits = self.read(input_ids, attention_mask, token_type_ids, topk_answer)
         outputs = []
@@ -91,7 +91,7 @@ class InteractiveDPR(object):
                     text = text[:char_start] + "<span class='red'><strong>" + text[char_start:char_end] + "</strong></span>" + text[char_end:]
                 else:
                     char_start, char_end = spans[0][0], spans[-1][-1]
-                    title = title[:char_start] + "<span class='red'><strong>" + title[char_start:char_end] + "</strong></span>"
+                    title = title[:char_start] + "<span class='red'><strong>" + title[char_start:char_end] + "</strong></span>" + title[char_end:]
 
                 curr_output.append({
                     "passage_index": o["passage_index"],

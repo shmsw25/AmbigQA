@@ -9,6 +9,81 @@
 	});
 
 	function load(){
+
+    loadSampleQuestions();
+
+    $('.editOption').keyup(function () {
+      var editText = $('.editOption').val();
+      $('editable').val(editText);
+      $('editable').html(editText);
+    });
+
+    $('.editOption').on('click', function () {
+      $('#answer').html('')
+    });
+
+    $(".run").click(loadAnswer);
+
+    $('.editOption').keyup(function(event) {
+      if (event.keyCode === 13) {
+        event.preventDefault();
+        if (event.stopPropagation!=undefined) {
+          event.stopPropagation();
+        }
+        loadAnswer();
+      }
+    })
+
+
+    $('.mode').click(function() {
+      mode = parseInt($('.mode:checked').val());
+      $('#answer').html('');
+      if (mode === 0) {
+        $('#select-question').show();
+        $('#write-question').hide();
+        $('#refresh').show();
+      } else {
+        $('#select-question').hide();
+        $('#write-question').show();
+        $('#refresh').hide();
+      }
+    });
+
+    /* Label Tooltip */
+    $('.mode').mouseover(function(event){
+      $('#mode-tooltip').removeClass('tooltip-hidden').addClass('tooltip-visible');
+      if (parseInt(event.target.value)===0)
+        $('#mode-tooltip').html("You can see example questions from NQ-open.");
+      else
+        $('#mode-tooltip').html("You can write your own questions.");
+    });
+    $('.mode').mouseout(function(){
+      $('#mode-tooltip').removeClass('tooltip-visible').addClass('tooltip-hidden');
+      $('#mode-tooltip').html(""); // this prevents newline
+    });
+    $('#k-div').mouseover(function(event){
+      $('#k-tooltip').removeClass('tooltip-hidden').addClass('tooltip-visible');
+      $('#k-tooltip').html("Number of answers to be returned (1--100).");
+    });
+    $('#k-div').mouseout(function(){
+      $('#k-tooltip').removeClass('tooltip-visible').addClass('tooltip-hidden');
+      $('#k-tooltip').html(""); // this prevents newline
+    });
+
+    /* Description Button */
+    $('#description-button').click(function(){
+      if ($('#description-button').html() === 'Show Me Details!') {
+        $('#description').show();
+        $('#description-button').html('Hide Details!');
+      } else {
+        $('#description').hide();
+        $('#description-button').html('Show Me Details!');
+      }
+    })
+
+  }
+
+  function loadSampleQuestions() {
     sendAjax("/select", {}, (data) => {
       questions = data.questions;
 			var dropdown = document.getElementById("question");
@@ -19,56 +94,14 @@
 				opt.innerHTML = questions[i];
         dropdown.appendChild(opt);
       }
-
-      $('.editOption').keyup(function () {
-        var editText = $('.editOption').val();
-        $('editable').val(editText);
-        $('editable').html(editText);
-      });
-
-      $('.editOption').on('click', function () {
-        $('#answer').html('')
-      });
-
-      $(".run").click(loadAnswer);
-
-      $('.mode').click(function() {
-        mode = parseInt($('.mode:checked').val());
-        $('#answer').html('');
-        if (mode === 0) {
-          $('#select-question').show();
-          $('#write-question').hide();
-        } else {
-          $('#select-question').hide();
-          $('#write-question').show();
-        }
-      });
-
-      /* Label Tooltip */
-      $('.mode').mouseover(function(event){
-        $('#mode-tooltip').removeClass('tooltip-hidden').addClass('tooltip-visible');
-        if (parseInt(event.target.value)===0)
-          $('#mode-tooltip').html("You can see example questions from NQ-open.");
-        else
-          $('#mode-tooltip').html("You can write your own questions.");
-      });
-      $('.mode').mouseout(function(){
-        $('#mode-tooltip').removeClass('tooltip-visible').addClass('tooltip-hidden');
-
-      });
-
-      /* Description Button */
-      $('#description-button').click(function(){
-        if ($('#description-button').html() === 'Show Me Details!') {
-          $('#description').show();
-          $('#description-button').html('Hide Details!');
-        } else {
-          $('#description').hide();
-          $('#description-button').html('Show Me Details!');
-        }
-      })
-
-		});
+      for(var i=0; i<questions.length; i++){
+				var opt = document.createElement("option");
+				opt.value = parseInt(i);
+        opt.id = "question-option-"+parseInt(i);
+				opt.innerHTML = questions[i];
+        dropdown.appendChild(opt);
+      }
+    })
   }
 
   function loadAnswer(){
@@ -77,10 +110,6 @@
       question_text = $('.editOption').val();
       if (!(question_text.replace(/\s/g, '').length)) {
         alert('Please enter a non-empty question.');
-        return;
-      }
-      if (!(paragraphs_text.replace(/\s/g, '').length)) {
-        alert('Please enter a non-empty paragraph.');
         return;
       }
     }
@@ -93,7 +122,6 @@
       alert('Please enter a number between 1 and 100.');
       return;
     }
-    console.log(k);
 		document.getElementById("answer").innerHTML = "";
 		document.getElementById("loading").style.display = "block";
 		var data = {
@@ -104,7 +132,7 @@
       var answer_field = document.getElementById('answer');
       for (var i=0; i<result.length; i++) {
         var metadata = `
-          <span class='footnote-sm'><em>P(a|q)</em>=` + result[i]["softmax"]["joint"].toFixed(2) + `</span>
+          <span class='footnote-sm'><em>P(a,p|q)</em>=` + result[i]["softmax"]["joint"].toFixed(2) + `</span>
           <span class='footnote-sm'><em>P(a|p,q)</em>=` + result[i]["softmax"]["span"].toFixed(2) + `</span>
           <span class='footnote'><em>P(p|q)</em>=` + result[i]["softmax"]["passage"].toFixed(2) + `</span>
           <span class='footnote'>Retrieval ranking: #` + (result[i]["passage_index"]+1) + `</span>`;
