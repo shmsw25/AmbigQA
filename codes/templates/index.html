@@ -23,11 +23,11 @@
           Vladimir Karpukhin, Barlas Oğuz, Sewon Min, Patrick Lewis, Ledell Wu, Sergey Edunov, Danqi Chen, Wen-tau Yih.
           EMNLP 2020.
           [<a href="https://arxiv.org/abs/2004.04906" target="_blank">paper</a>]
-          [<a href="https://github.com/facebookresearch/DPR" target="_blank">code (paper)</a>]
-          [<a href="https://github.com/shmsw25/AmbigQA/tree/master/codes" target="_blank">code (demo)</a>]
+          [<a href="https://github.com/facebookresearch/DPR" target="_blank">code</a>]
           <br />
           Demo made & maintained by <a href="https://shmsw25.github.io" target="_blank">Sewon Min</a>
           (<a href="mailto:sewon@cs.washington.edu"><i class="fa fa-envelope" aria-hidden="true"></i></a>)
+          [<a href="https://github.com/shmsw25/AmbigQA/tree/demo/codes" target="_blank">demo code</a>]
           <br />
           [<span id="description-button">Show Me Details!</span>]
         </p>
@@ -41,7 +41,8 @@
         <br />
         Then, a span extraction model reads the question and passages, and outputs passage selection scores
         (<em>P(p|q)</em>) and span answers from each passage (<em>P(a|p,q)</em>).
-        The final answer is determined based on <em>P(p|q)P(a|p,q)</em>.
+        <br />
+        The final answer is determined based on <em>p(a|q)=P(p|q)P(a|p,q)</em>.
         <br /><br />
         The full DPR model is resource expensive, requiring over 150GB of RAM.
         In order to fit in 20GB of RAM, we massively prunced the Wikipedia corpus, from 21M passages to 1.7 passages.
