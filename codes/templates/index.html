@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DPR Demo</title>
+    <link href="../static/styles/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../static/styles/bootstrap/css/bootstrap-theme.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../static/styles/pretty-checkbox.min.css"/>
+    <link rel="stylesheet" href="../static/styles/index.css"/>
+    <link rel="shortcut icon" href="https://www.cs.washington.edu/sites/default/files/favicon_3.ico" type="image/vnd.microsoft.icon" />
+  </head>
+  <body>
+
+    <div id="navbar" class="container">
+      <div id="title">
+        <h2 class="display-3" style="margin-top:20px; margin-bottom:0px;">
+          Dense Passage Retrieval for Open-domain Question Answering
+        </h2>
+        <p>
+          Vladimir Karpukhin, Barlas Oğuz, Sewon Min, Patrick Lewis, Ledell Wu, Sergey Edunov, Danqi Chen, Wen-tau Yih.
+          EMNLP 2020.
+          [<a href="https://arxiv.org/abs/2004.04906" target="_blank">paper</a>]
+          [<a href="https://github.com/facebookresearch/DPR" target="_blank">code (paper)</a>]
+          [<a href="https://github.com/shmsw25/AmbigQA/tree/master/codes" target="_blank">code (demo)</a>]
+          <br />
+          Demo made & maintained by <a href="https://shmsw25.github.io" target="_blank">Sewon Min</a>
+          (<a href="mailto:sewon@cs.washington.edu"><i class="fa fa-envelope" aria-hidden="true"></i></a>)
+          <br />
+          [<span id="description-button">Show Me Details!</span>]
+        </p>
+      </div>
+      <div id="description" style="display:none">
+        This demo is based on <b><i>DPR</i></b>, consisting of a dense retrieval model and a span extraction model.
+        <br />
+        First, a dense retrieval model retrieves top <em>K</em> passages from Wikipedia
+        by finding passages using maximum inner product search between question representations
+        and passage representations (<em>K</em>=100).
+        <br />
+        Then, a span extraction model reads the question and passages, and outputs passage selection scores
+        (<em>P(p|q)</em>) and span answers from each passage (<em>P(a|p,q)</em>).
+        The final answer is determined based on <em>P(p|q)P(a|p,q)</em>.
+        <br /><br />
+        The full DPR model is resource expensive, requiring over 150GB of RAM.
+        In order to fit in 20GB of RAM, we massively prunced the Wikipedia corpus, from 21M passages to 1.7 passages.
+        <br />
+        This variant achieves 36EM on NQ open (the full DPR model achieves 41EM).
+        <hr />
+      </div>
+      <p>
+        <b>Instructions:</b> Choose a question from sample questions or write your own question.
+        Choose the number of top answers to be returned by the system (10 by default).
+      </p>
+    </div>
+    <div class="container" id="container" role="main">
+
+      <!-- Mode -->
+      <div id="mode-container" class="radio-box-container">
+        <div class="pretty p-default p-curve">
+          <input type="radio" name="color" class="mode" value="0" checked/>
+          <div class="state p-primary-o">
+              <label>NQ Examples</label>
+          </div>
+        </div>
+        <div class="pretty p-default p-curve">
+          <input type="radio" name="color" class="mode" value="1" />
+          <div class="state p-primary-o">
+              <label>My Input</label>
+          </div>
+        </div>
+        <div id="mode-tooltip" class="my-tooltip tooltip-hidden"></div>
+
+        <div style="float: right;">
+          <label># of answers:</label>
+          <input type="text" id="k" name="k" value="10" style="width: 40px;">
+        </div>
+      </div>
+
+      <!-- Reasoning type  -->
+      <!--
+      <div id="reasoning-type-container" class="radio-box-container">
+        <div class="pretty p-icon p-round">
+          <input type="radio" name="reasoning" class="reasoning-type" value="0" />
+          <div class="state p-primary">
+            <i class="icon mdi mdi-check"></i>
+            <label>Bridging</label>
+          </div>
+        </div>
+        <div class="pretty p-icon p-round">
+          <input type="radio" name="reasoning" class="reasoning-type" value="1" />
+          <div class="state p-primary">
+            <i class="icon mdi mdi-check"></i>
+            <label>Intersection</label>
+          </div>
+        </div>
+        <div class="pretty p-icon p-round">
+          <input type="radio" name="reasoning" class="reasoning-type" value="2" checked />
+          <div class="state p-primary">
+            <i class="icon mdi mdi-check"></i>
+            <label>Decide for me!</label>
+          </div>
+        </div>
+        <div id="reasoning-type-tooltip" class="my-tooltip tooltip-hidden"></div>
+      </div>-->
+
+      <!-- Dropdown for Cached Examples -->
+      <div class="input-group" id="select-question">
+        <!--<span class="input-group-addon">Options</span>-->
+        <select id="question" class="form-control"></select>
+        <!--<input type="text" class="form-control">-->
+        <span class="input-group-addon btn btn-default run">Run</span>
+      </div>
+
+      <!-- Input box for User Input -->
+      <div class="input-group" id="write-question" style="display:none">
+        <input class="editOption" class="editable" placeholder="Write my own question" />
+        <span class="input-group-addon btn btn-default run">Run</span>
+      </div>
+
+      <div id="loading" style="display:none">
+         Loading... (Latency should be less than 2s)
+      </div>
+
+      <div id="answer">
+      </div>
+
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="../static/jquery-3.1.0.min.js"></script>
+    <script src="../static/jszip.min.js"></script>
+    <script src="../static/index.js"></script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-141683611-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'UA-141683611-1');
+    </script>
+  </body>
+</html>
+
+

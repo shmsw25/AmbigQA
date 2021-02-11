@@ -68,7 +68,7 @@ def decode_span(feature, tokenizer, start_logits_list, end_logits_list, sel_logi
                     prev_start_index<=start_index<=end_index<=prev_end_index
                     for (prev_start_index, prev_end_index) in chosen_span_intervals]):
                 continue
-
+            '''
             answer_text = tokenizer.decode(positive_token_ids[start_index:end_index+1],
                                            skip_special_tokens=True,
                                            clean_up_tokenization_spaces=True).strip()
@@ -79,14 +79,17 @@ def decode_span(feature, tokenizer, start_logits_list, end_logits_list, sel_logi
                 tokenizer.decode(positive_token_ids[end_index+1:],
                                  skip_special_tokens=True,
                                  clean_up_tokenization_spaces=True).strip()
-
+            '''
             nbest.append({
-                'text': answer_text,
+                #'text': answer_text,
                 'passage_index': passage_index,
-                'passage': passage_text,
-                'log_softmax': log_softmax_switch_logits_list[passage_index] + \
+                'start_index': start_index,
+                'end_index': end_index,
+                "start_offset": start_offset,
+                #'passage': passage_text,
+                'log_softmax': (log_softmax_switch_logits_list[passage_index],
                                 log_softmax_start_logits[start_index] + \
-                                log_softmax_end_logits[end_index]})
+                                log_softmax_end_logits[end_index])})
 
             chosen_span_intervals.append((start_index, end_index))
             if topk_answer>-1 and topk_answer==len(chosen_span_intervals):
@@ -95,7 +98,7 @@ def decode_span(feature, tokenizer, start_logits_list, end_logits_list, sel_logi
     if len(nbest)==0:
         nbest = [{'text': 'empty', 'log_softmax': -99999, 'passage_index': 0, 'passage': ''}]
 
-    sorted_nbest = sorted(nbest, key=lambda x: -x["log_softmax"])
+    sorted_nbest = sorted(nbest, key=lambda x: -np.sum(x["log_softmax"]))
 
     if n_paragraphs is None:
         return sorted_nbest[:topk_answer] if topk_answer>-1 else sorted_nbest

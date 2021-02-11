@@ -21,7 +21,8 @@ class SpanPredictor(BertForQuestionAnswering):
         output = self.bert(input_ids.view(N*M, L),
                            attention_mask=attention_mask.view(N*M, L),
                            token_type_ids=token_type_ids.view(N*M, L),
-                           inputs_embeds=None if inputs_embeds is None else inputs_embeds.view(N*M, L, -1))[0]
+                           inputs_embeds=None if inputs_embeds is None else inputs_embeds.view(N*M, L, -1))
+        output = output.last_hidden_state
         logits = self.qa_outputs(output)
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1)
