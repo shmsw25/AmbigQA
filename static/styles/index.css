@@ -1,0 +1,191 @@
+body {
+  margin:0;
+  font-family: Georgia, serif;
+  font-size: 11pt;
+}
+#container {
+  padding: 3px;
+  margin-left: 50px;
+  margin-right: 50px;
+}
+.panel, .input-group, .row, .wikipedia-box {
+  margin: 0;
+}
+.narrow-panel, .narrow-input-group, .narrow-wikipedia-box {
+}
+.panel {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.panel-inline {
+}
+.graybackground {
+  background-color: darkgray;
+  color: white;
+}
+#instruction-header, #prompt-annotations-header {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0);
+  display: inline-block;
+}
+#instruction-body {
+  padding: 20px;
+}
+.red {
+  color: #dd5050;
+}
+.green {
+  color: #58a758;
+}
+.yellow {
+  color: #ffaa1d;
+}
+.bold {
+  font-weight: bold;
+}
+.hl {
+  background-color: #ffeda0;
+}
+span.button-span {
+  background-color: #2aabd2;
+  color: white;
+}
+.large {
+  font-size: 15pt;
+}
+.underline {
+  text-decoration: underline;
+}
+#instruction-body span.q, #instruction-body blockquote {
+  background-color: #e3e3e3;
+  font-size: 11pt;
+}
+#instruction-body blockquote {
+  padding: 3px;
+  width: 600px;
+}
+.panel-heading {
+  padding: 3px;
+}
+#input-question {
+  padding: 6px;
+  font-size: 16pt;
+  font-weight: bold;
+}
+.editOption {
+  position: relative;
+  width: 100%; /*886px;*/
+  height: 41px;
+}
+.row, .col {
+  padding: 0;
+  margin: 0;
+  float: left;
+}
+.col-6, .col-md-4, .side {
+  padding-left: 20px;
+}
+#div-for-buttons button.current {
+  border: black 3px solid;
+  font-weight: bold;
+}
+#div-for-buttons button {
+  margin: 3px;
+}
+.custom-control-input {
+  width: 18px;
+  height: 18px;
+  float: left;
+}
+.item {
+  white-space: nowrap;
+  display:inline;
+  margin-top: 10px;
+}
+.question-to-hide {
+  font-size: 9pt;
+  margin-bottom: 0;
+  margin-top: 5px;
+  white-space: initial;
+}
+span.label {
+  font-size: 10pt;
+  font-weight: normal;
+}
+.btn-sm {
+  padding: 3px;
+}
+.snippet {
+  border: 0;
+  background-color: white;
+  text-align: left;
+  height: 23px;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+.hyperlink {
+  border: 0;
+  background-color: white;
+  text-align: left;
+  padding-top, padding-bottom: 0;
+  padding-left, padding-right: 2px;
+  font-size: 8pt;
+}
+#checkboxes {
+  margin-top: 10px;
+}
+/*.small-hint {
+  color: darkgray;
+}*/
+#mw-navigation, .noprint {
+  display: none;
+}
+#button {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+.delete-pair-button {
+  height: 20px;
+  padding: 0;
+  margin-bottom: 10px;
+  font-size: 9pt;
+}
+div.blank {
+  height: 10px;
+}
+.guide-box {
+  margin: 10px;
+  padding: 10px;
+  background-color: #EEEEEE;
+  border-radius: 8px;
+}
+.warning-box {
+  margin: 10px;
+  padding: 10px;
+  background-color: #ffeda0;
+  border-radius: 8px;
+}
+img {
+  border: 1px lightgray solid;
+}
+#instructions .row {
+  /*width: 820px;*/
+}
+#instructions .col {
+  /*width: 400px;*/
+  display: inline-block;
+  margin: 20px;
+}
+#instructions .sep li {
+  margin: 2em 0;
+}
+.small {
+  font-size: 9pt;
+}
