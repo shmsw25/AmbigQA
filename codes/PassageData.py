@@ -7,7 +7,7 @@ from collections import defaultdict
 import torch
 from torch.utils.data import Dataset, TensorDataset, DataLoader, RandomSampler, SequentialSampler
 
-from ambigqa_evaluate_script import normalize_answer
+#from ambigqa_evaluate_script import normalize_answer
 from DataLoader import MyDataLoader
 
 class PassageData(object):
@@ -22,22 +22,52 @@ class PassageData(object):
         self.tokenizer = tokenizer
         self.tokenized_data = None
 
-    def load_db(self):
+    def load_db(self, subset=None):
         if not self.args.skip_db_load:
-            data = []
+            self.passages = {}
+            self.titles = {}
             with gzip.open(self.data_path, "rb") as f:
+                _ = f.readline()
+                offset = 0
                 for line in f:
-                    data.append(line.decode().strip().split("\t"))
-                    if self.args.debug and len(data)==100:
-                        break
-            assert all([len(d)==3 for d in data])
-            assert data[0]==["id", "text", "title"]
-            self.passages = {int(d[0])-1:d[1].lower() for d in data[1:]}
-            self.titles = {int(d[0])-1:d[2].lower() for d in data[1:]}
+                    if subset is None or offset in subset:
+                        _id, passage, title = line.decode().strip().split("\t")
+                        assert int(_id)-1==offset
+                        self.passages[offset] = passage.lower()
+                        self.titles[offset] = title.lower()
+                    offset += 1
+            assert subset is None or len(subset)==len(self.titles)==len(self.passages)
             self.logger.info("Loaded {} passages".format(len(self.passages)))
 
     def load_tokenized_data(self, model_name, all=False, do_return=False, subset=None, index=None):
-        if all:
+        def _get_cache_path(index):
+            if model_name=="bert":
+                cache_path = self.data_path.replace(".tsv.gz", "_{}_BertTokenized.pkl".format(index))
+            elif model_name=="albert":
+                cache_path = self.data_path.replace(".tsv.gz", "_{}_AlbertTokenized.pkl".format(index))
+            elif model_name=="bart":
+                cache_path = self.data_path.replace(".tsv.gz", "_{}_BartTokenized.pkl".format(index))
+            else:
+                raise NotImplementedError(model_name)
+            return cache_path
+
+        if subset is not None and not os.path.exists(_get_cache_path(0)):
+            assert not self.args.skip_db_load
+            if self.titles is None or self.passages is None:
+                self.load_db(subset)
+            final_tokenized_data = {"input_ids": {}, "attention_mask": {}}
+            psg_ids = list(subset)
+            input_data = [self.titles[_id] + " " + self.tokenizer.sep_token + " " + self.passages[_id]
+                          for _id in psg_ids]
+            tokenized_data = self.tokenizer.batch_encode_plus(input_data,
+                        max_length=128,
+                        pad_to_max_length=model_name in ["albert", "bert"])
+            input_ids = {_id: _input_ids
+                         for _id, _input_ids in zip(psg_ids, tokenized_data["input_ids"])}
+            attention_mask = {_id: _attention_mask
+                              for _id, _attention_mask in zip(psg_ids, tokenized_data["attention_mask"])}
+            final_tokenized_data = {"input_ids": input_ids, "attention_mask": attention_mask}
+        elif all:
             for index in range(10):
                 curr_tokenized_data = self.load_tokenized_data(model_name, all=False, do_return=True, subset=subset, index=index)
                 if index==0:
@@ -52,14 +82,7 @@ class PassageData(object):
         else:
             index=self.args.db_index if index is None else index
             assert 0<=index<10
-            if model_name=="bert":
-                cache_path = self.data_path.replace(".tsv.gz", "_{}_BertTokenized.pkl".format(index))
-            elif model_name=="albert":
-                cache_path = self.data_path.replace(".tsv.gz", "_{}_AlbertTokenized.pkl".format(index))
-            elif model_name=="bart":
-                cache_path = self.data_path.replace(".tsv.gz", "_{}_BartTokenized.pkl".format(index))
-            else:
-                raise NotImplementedError(model_name)
+            cache_path = _get_cache_path(index)
             if os.path.exists(cache_path):
                 with open(cache_path, "rb") as f:
                     tokenized_data = pkl.load(f)
@@ -135,5 +158,4 @@ class PassageData(object):
         for k in k_list:
             self.logger.info("Recall @ %d\t%.2f" % (k, np.mean(recall[k])))
         return recall[100]
-
 
