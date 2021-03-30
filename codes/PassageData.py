@@ -7,7 +7,7 @@ from collections import defaultdict
 import torch
 from torch.utils.data import Dataset, TensorDataset, DataLoader, RandomSampler, SequentialSampler
 
-#from ambigqa_evaluate_script import normalize_answer
+from ambigqa_evaluate_script import normalize_answer
 from DataLoader import MyDataLoader
 
 class PassageData(object):
