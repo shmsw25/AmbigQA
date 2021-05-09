@@ -263,7 +263,7 @@ For details, please refer to `InteractiveDPR.py`
 ## Need preprocessed data / pretrained models / predictions?
 
 **DPR**
-- [DPR predictions on NQ](https://nlp.cs.washington.edu/ambigqa/models/nq-dpr.zip)
+- [DPR predictions on NQ & AmbigNQ](https://nlp.cs.washington.edu/ambigqa/models/nq-dpr.zip): contains passage idxs from wikipedia 20181220 (NQ) or 20200201 (AmbigNQ)
 
 **Question Answering**
 Click in order to download checkpoints:
