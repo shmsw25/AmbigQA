@@ -263,7 +263,8 @@ For details, please refer to `InteractiveDPR.py`
 ## Need preprocessed data / pretrained models / predictions?
 
 **DPR**
-- [DPR predictions on NQ](https://nlp.cs.washington.edu/ambigqa/models/nq-dpr.zip): contains passage idxs from wikipedia 20181220
+- [DPR predictions on NQ](https://nlp.cs.washington.edu/ambigqa/models/nq-dpr.zip): contains passage idxs from wikipedia 20181220 for NQ train/dev/test
+- [DPR predictions on AmbigNQ](https://nlp.cs.washington.edu/ambigqa/models/ambigqa-dpr.zip): contains passage idxs from wikipedia 20200201 for AmbigNQ train/dev and NQ test (AmbigNQ test set is hidden and you need to submit NQ test predictions to submit to the leaderboard)
 
 **Question Answering**
 Click in order to download checkpoints:
