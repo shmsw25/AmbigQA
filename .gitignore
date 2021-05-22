@@ -4,4 +4,4 @@ __pycache__
 */__pycache__
 */*/__pycache__
 pycocoevalcap/tokenizer/stanford-corenlp-3.4.1.jar
-
+*.py
