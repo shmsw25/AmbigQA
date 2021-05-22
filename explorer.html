@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AmbigNQ Explorer</title>
+    <link href="static/styles/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/styles/bootstrap/css/bootstrap-theme.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="static/styles/pretty-checkbox.min.css"/>
+    <link rel="stylesheet" href="static/styles/index.css"/>
+    <link rel="shortcut icon" href="https://www.cs.washington.edu/sites/default/files/favicon_3.ico" type="image/vnd.microsoft.icon" />
+  </head>
+  <body>
+    <div id="navbar" class="container">
+      <div class="collapse navbar-collapse" id="menu-list">
+        <button class="title">
+          <a href="https://nlp.cs.washington.edu/ambigqa/">
+            AmbigQA: Answering Ambiguous Open-domain Questions
+          </a>
+        </button>
+        <button><a href="https://nlp.cs.washington.edu/ambigqa/leaderboard.html">Leaderboard</a></button>
+        <button><a class="active" href="https://nlp.cs.washington.edu/ambigqa/explorer.html">Data explorer</a></button>
+        <button><a href="https://nlp.cs.washington.edu/ambigqa/">Home</a></button>
+      </div>
+    </div>
+    <div id="second-navbar" class="container">
+      <div id="mode-container" class="radio-box-container">
+        <div class="pretty p-default p-curve">
+          <input type="radio" name="mode" class="mode" value="0" />
+          <div class="state p-primary-o">
+            <label>Only examples with multiple pairs</label>
+          </div>
+        </div>
+        <div class="pretty p-default p-curve">
+          <input type="radio" name="mode" class="mode" value="1" />
+          <div class="state p-primary-o">
+            <label>Only examples with a single answer</label>
+          </div>
+        </div>
+        <div class="pretty p-default p-curve">
+          <input type="radio" name="mode" class="mode" value="2" checked />
+          <div class="state p-primary-o">
+            <label>All examples</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="container" id="container" role="main">
+      <div class="row">
+        <div id="sidebar" class="col col-6 scrollable"></div>
+        <div id="content" class="col col-12"></div>
+      </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="static/jquery-3.1.0.min.js"></script>
+    <script src="static/jszip.min.js"></script>
+    <script src="static/explorer_index.js"></script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-164208253-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-164208253-1');
+    </script>
+  </body>
+</html>
+
