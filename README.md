@@ -6,7 +6,7 @@ by Sewon Min, Julian Michael, Hannaneh Hajishirzi, and Luke Zettlemoyer.
 
 * [Website](https://nlp.cs.washington.edu/ambigqa)
 * Read the [paper](https://arxiv.org/abs/2004.10645)
-* Download the dataset: [AmbigNQ light ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq_light.zip) / [AmbigNQ full ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq.zip) / [NQ-open](https://nlp.cs.washington.edu/ambigqa/data/nqopen.zip)
+* Download the dataset: [AmbigNQ light ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq_light.zip) / [AmbigNQ full ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq.zip) / [AmbigNQ evidence ver. *(new!)*](https://nlp.cs.washington.edu/ambigqa/data/ambignq_with_evidence_articles.zip) / [NQ-open](https://nlp.cs.washington.edu/ambigqa/data/nqopen.zip)
 * **Update (07/2020)**: Try running [baseline codes][codes]
 * **Update (11/2021)**: We released semi-oracle evidence passages for researchers interested in multi-answer extraction and disambiguation rather than retrieval. Please read [evidence.md](evidence.md) for details.
 
