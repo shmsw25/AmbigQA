@@ -8,7 +8,7 @@ by Sewon Min, Julian Michael, Hannaneh Hajishirzi, and Luke Zettlemoyer.
 * Read the [paper](https://arxiv.org/abs/2004.10645)
 * Download the dataset: [AmbigNQ light ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq_light.zip) / [AmbigNQ full ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq.zip) / [NQ-open](https://nlp.cs.washington.edu/ambigqa/data/nqopen.zip)
 * **Update (07/2020)**: Try running [baseline codes][codes]
-* **Update (11/2021)**: We released semi-oracle evidence passages for researchers interested in multi-answer extraction and disambiguation rather than retrieval. Please read [evidence.md](https://github.com/shmsw25/AmbigQA/tree/master/evidence.md) for details.
+* **Update (11/2021)**: We released semi-oracle evidence passages for researchers interested in multi-answer extraction and disambiguation rather than retrieval. Please read [evidence.md](evidence.md) for details.
 
 ## Content
 1. [Citation](#citation)
@@ -50,6 +50,7 @@ the dataset which we built ours off of:
 ### AmbigNQ
 
 [Click here to download the light version of the data (1.1M)](https://nlp.cs.washington.edu/ambigqa/data/ambignq_light.zip).
+
 [Click here to download the full version of the data (18M)](https://nlp.cs.washington.edu/ambigqa/data/ambignq.zip).
 
 We provide two distributions of our new dataset AmbigNQ: a `full` version with all annotation metadata
@@ -83,7 +84,7 @@ The light version contains
 
 [Click here to download the data (3.9M)](https://nlp.cs.washington.edu/ambigqa/data/ambignq_with_evidence_articles.zip).
 
-Please read [evidence.md](https://github.com/shmsw25/AmbigQA/tree/master/evidence.md) for details.
+Please read [evidence.md](evidence.md) for details.
 
 The evidence version contains
 - train_with_evidence_articles.json (1.2G)
@@ -94,6 +95,8 @@ They contain a list of dictionary that represents a single datapoint, just as th
 
 - `articles_plain_text`: a list of articles in the plain text.
 - `articles_html_text`: a list of articles in the HTML text.
+
+*In order to evaluate your model on the test data*: Follow [Leaderboard submission guide](#leaderboard-submission-guide) to submit your model predictions on the test questions.
 
 
 ### NQ-open
@@ -173,6 +176,8 @@ Please make sure you include the following in the email:
 - the name of the model
 - [optional] dev prediction file and expected dev results. This is to double-check there is no unexpected problem.
 - [optional] the institution, and link to the paper/code/demo. They can be updated later.
+
+If you use semi-oracle articles described [here](evidence.md), please make sure to mention it.
 
 
 Notes

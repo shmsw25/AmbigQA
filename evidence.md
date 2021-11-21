@@ -65,14 +65,14 @@ While the size of the evidence text can be a variable in the end-to-end QA model
 #### Answer coverage and performance upperbound
 (Performance upperbound is the same for both answer F1 and QG F1)
 
-|   | Macro-Avg answer coverage | Performance upperbound (all) | Performance upperbound (multi-only) |
+|   | Macro-Avg coverage | Perf upperbound (all) | Perf upperbound (multi-only) |
 |---|---|---|---|
 | Train | 78.2 | 80.1 | 77.1 |
 | Dev   | 84.4 | 86.6 | 82.2 |
 | Test  | 83.0 | 85.6 | 81.3 |
 
 
-#### Distributions of the number of covered answers
+#### Distributions of the number of covered answers (%)
 
 |   | 0 | 1 | 2 | 3 | 4+ |
 |---|---|---|---|---|---|
@@ -86,8 +86,8 @@ While the size of the evidence text can be a variable in the end-to-end QA model
 We use the Wikipedia dump of 02/01/2020, which is the same one as used in the [AmbigQA paper](https://arxiv.org/abs/2004.10645). We preprocess the dump so that each article includes headers, plain text and lists (tables and infoboxes are excluded). We excluded disambiguation pages, following prior work (DrQA, DPR and more).
 
 We look up the annotator interactive logs, and find positive articles and negative articles as follows.
-* Positive articles: we look up articles that anotator clicked (if they clicked a disambiguation page, all articles that are linked to the disambiguation page), and include articles that contain any valid answer as positive articles.
-* Negative articles: all articles that annotators have seen (including just titles) are included. This includes articles that are result of the search engine and all articles linked to the disambiguation page. Among those, articles that do not contain the valid answers are considered as negative articles.
+* Positive articles: we examine articles that anotator clicked (if they clicked a disambiguation page, articles that are linked to the disambiguation page), and include articles that contain any valid answer as positive articles.
+* Negative articles: we include all articles that annotators have seen (including just titles). This includes articles that are result of the search engine and all articles linked to the disambiguation page. Among those, articles that do not contain the valid answers are considered as negative articles.
 
 Once we obtain positive articles and negative articles, we create a set of articles by (1) first including all positive articles, and (2) if the number of positive articles is less than 3, sampling negative articles as follows.
 1. Create a BM25 index using all positive and negative articles.
