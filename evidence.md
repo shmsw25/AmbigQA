@@ -18,7 +18,7 @@ The number of Wikipedia articles per question is 3.0 on average.
 
 ### Data Format
 
-The json file is a list, which i-th item is a dictionary containing `id`, `question`, `annotations` (as in the original AmbigQA data) as well as `articles_plain_text` and `articles_html_text`. `articles_plain_text` is a list of articles in plain text, such as:
+The json file is a list, which i-th item is a dictionary containing `id`, `question`, `annotations` (as in the original AmbigQA data) as well as `articles_plain_text` and `articles_html_text`. `articles_plain_text` is a list of articles in plain text (Markdown), such as:
 ```python
 [
   "# Dexter (season 1)\n\nThe first season of Dexter is an adaptation of Jeff Lindsay's first novel in a series of the same name, Darkly Dreaming Dexter. ...",
@@ -46,20 +46,20 @@ While the size of the evidence text can be a variable in the end-to-end QA model
 
 ### Statistics and performance upperbound
 
-#### Number of Wikipedia articles per question
-|   | Mean | Median | 90 Percentile | 95 Percentile |
+#### Distributions of the number of Wikipedia articles per question
+|   | 1 | 2 | 3 | 4+ |
 |---|---|---|---|---|
-| Train | 3.0 | 3.0 | 3.0 | 3.0 |
-| Dev   | 3.0 | 3.0 | 3.0 | 3.0 |
-| Test  | 3.0 | 3.0 | 3.0 | 3.0 |
+| Train | 0.1 | 0.1 | 99.4 | 0.3 |
+| Dev   | 0.0 | 0.0 | 99.5 | 0.4 |
+| Test  | 0.0 | 0.0 | 99.5 | 0.5 |
 
-#### Number of tokens per question
+#### Distributions of the number of tokens per question
 (based on the plain text, white space tokenization)
-|   | Mean | Median | 90 Percentile | 95 Percentile |
-|---|---|---|---|---|
-| Train | 9344.4 | 7532.0 | 18420.5 | 22564.3 |
-| Dev   | 9371.3 | 7561.0 | 18560.7 | 22690.8 |
-| Test  | 9530.3 | 7759.5 | 19001.2 | 23357.6 |
+|   | 0--5000 | 5000--10000| 10000--15000 | 15000--20000| 20000-- |
+|---|---|---|---|---|---|
+| Train | 30.9 | 33.2 | 19.1 | 9.2 | 7.7 |
+| Dev   | 29.8 | 33.9 | 19.4 | 8.8 | 8.0 |
+| Test  | 29.0 | 34.8 | 18.0 | 9.8 | 8.3 |
 
 #### Answer coverage and performance upperbound
 (Performance upperbound is the same for both answer F1 and QG F1)
