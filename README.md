@@ -6,14 +6,16 @@ by Sewon Min, Julian Michael, Hannaneh Hajishirzi, and Luke Zettlemoyer.
 
 * [Website](https://nlp.cs.washington.edu/ambigqa)
 * Read the [paper](https://arxiv.org/abs/2004.10645)
-* Download the dataset: [AmbigNQ light ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq_light.zip) / [AmbigNQ full ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq.zip) / [NQ-open](https://nlp.cs.washington.edu/ambigqa/data/nqopen.zip)
+* Download the dataset: [AmbigNQ light ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq_light.zip) / [AmbigNQ full ver.](https://nlp.cs.washington.edu/ambigqa/data/ambignq.zip) / [AmbigNQ evidence ver. *(new!)*](https://nlp.cs.washington.edu/ambigqa/data/ambignq_with_evidence_articles.zip) / [NQ-open](https://nlp.cs.washington.edu/ambigqa/data/nqopen.zip)
 * **Update (07/2020)**: Try running [baseline codes][codes]
+* **Update (11/2021)**: We released semi-oracle evidence passages for researchers interested in multi-answer extraction and disambiguation rather than retrieval. Please read [evidence.md](evidence.md) for details.
 
 ## Content
 1. [Citation](#citation)
 2. [Dataset Contents](#dataset-contents)
-    * [AmbigNQ format](#ambignq)
-    * [NQ-open format](#nq-open)
+    * [AmbigNQ](#ambignq)
+    * [AmbigNQ with evidence articles](#ambignq-with-evidence-articles)
+    * [NQ-open](#nq-open)
     * [Additional resources](#additional-resources)
 3. [Evaluation script](#evaluation-script)
 4. [Baseline codes](#baseline-codes)
@@ -47,6 +49,10 @@ the dataset which we built ours off of:
 
 ### AmbigNQ
 
+[Click here to download the light version of the data (1.1M)](https://nlp.cs.washington.edu/ambigqa/data/ambignq_light.zip).
+
+[Click here to download the full version of the data (18M)](https://nlp.cs.washington.edu/ambigqa/data/ambignq.zip).
+
 We provide two distributions of our new dataset AmbigNQ: a `full` version with all annotation metadata
 and a `light` version with only inputs and outputs.
 
@@ -58,7 +64,7 @@ The light version contains
 - train_light.json (3.3M)
 - dev_light.json (977K)
 
-`train.json` and `dev.json` files contains a list of dictionary that represents a single datapoint, with the following keys
+`train.json` and `dev.json` files contain a list of dictionary that represents a single datapoint, with the following keys
 
 - `id` (string): an identifier for the question, consistent with the original NQ dataset.
 - `question` (string): a question. This is identical to the question in the original NQ except we postprocess the string to start uppercase and end with a question mark.
@@ -73,7 +79,30 @@ The light version contains
 
 `{train|dev}_light.json` are formatted the same way, but only contain `id`, `question` and `annotations`.
 
+
+### AmbigNQ with evidence articles
+
+[Click here to download the data (575M)](https://nlp.cs.washington.edu/ambigqa/data/ambignq_with_evidence_articles.zip).
+
+Please read [evidence.md](evidence.md) for details.
+
+The evidence version contains
+- train_with_evidence_articles.json (1.2G)
+- dev_with_evidence_articles.json (241M)
+- test_with_evidence_articles_without_answers.json (245M)
+
+They contain a list of dictionary that represents a single datapoint, just as the above. In addition to `id`, `question` and `annotations` (omitted in the test data), each dictionary contains
+
+- `articles_plain_text`: a list of articles in the plain text.
+- `articles_html_text`: a list of articles in the HTML text.
+
+*In order to evaluate your model on the test data*: Follow [Leaderboard submission guide](#leaderboard-submission-guide) to submit your model predictions on the test questions.
+
+
 ### NQ-open
+
+[Click here to download the data (3.9M)](https://nlp.cs.washington.edu/ambigqa/data/nqopen.zip).
+
 
 We release our split of NQ-open, for comparison and use as weak supervision:
 
@@ -91,8 +120,7 @@ Each file contains a list of dictionaries representing a single datapoint, with 
 
 - `docs.db`: sqlite db that is consistent with [DrQA](https://github.com/facebookresearch/DrQA); containing plain text only, no disambiguation pages
 - `docs-html.db`: sqlite db that is consistent with [DrQA](https://github.com/facebookresearch/DrQA), containing html, no disambiguation pages
-- (Coming Soon!) Top 100 Wikipedia passages retrieved from Dense Passage Retrieval
-
+- Top 100 Wikipedia passages retrieved from Dense Passage Retrieval
 
 ## Evaluation script
 
@@ -148,6 +176,8 @@ Please make sure you include the following in the email:
 - the name of the model
 - [optional] dev prediction file and expected dev results. This is to double-check there is no unexpected problem.
 - [optional] the institution, and link to the paper/code/demo. They can be updated later.
+
+If you use semi-oracle articles described [here](evidence.md), please make sure to mention it.
 
 
 Notes
