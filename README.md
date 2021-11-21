@@ -82,7 +82,7 @@ The light version contains
 
 ### AmbigNQ with evidence articles
 
-[Click here to download the data (3.9M)](https://nlp.cs.washington.edu/ambigqa/data/ambignq_with_evidence_articles.zip).
+[Click here to download the data (575M)](https://nlp.cs.washington.edu/ambigqa/data/ambignq_with_evidence_articles.zip).
 
 Please read [evidence.md](evidence.md) for details.
 
