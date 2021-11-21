@@ -13,7 +13,6 @@ We released semi-oracle evidence passages for researchers interested in multi-an
 
 ## General information about the data
 
-Each question is paired with a set of Wikipedia articles (HTML format) which has a high coverage of multiple answers for the question. The set of articles are obtained based on (incomplete) annotator logs. We call it *semi-*oracle instead of oracle because (1) the annotator logs are incomplete, and (2) we excluded tables and infoboxes when preprocessing the Wikipedia articles.
 
 The number of Wikipedia articles per question is 3.0 on average.
 
@@ -22,16 +21,16 @@ The number of Wikipedia articles per question is 3.0 on average.
 The json file is a list, which i-th item is a dictionary containing `id`, `question`, `annotations` (as in the original AmbigQA data) as well as `articles_plain_text` and `articles_html_text`. `articles_plain_text` is a list of articles in plain text, such as:
 ```python
 [
-  "# Dexter (season 1)\n\nThe first season of Dexter is ...",
-  "plain_text": "# Chrisstian Camargo\n\nChristian Camargo is an American actor, ...",
+  "# Dexter (season 1)\n\nThe first season of Dexter is an adaptation of Jeff Lindsay's first novel in a series of the same name, Darkly Dreaming Dexter. ...",
+  "# Chrisstian Camargo\n\nChristian Camargo is an American actor, producer, writer and director. ... ## Early years\n\nCamargo was born ...",
   "# List of Dexter characters\n\nThis is a list of characters ... * Michael C. Hall\n* Maxwell Huckabee (age 3) * Nicholas Vigneau (young Dexter, season 7) ..."
 ]
 ```
 `article_html_text` is a list of articles in an html format, such as:
 ```python
 [
-  "<h1>Dexter (season 1)\n\nThe first season of Dexter is ...",
-  "<h1>Chrisstian Camargo</h1>\n\nChristian Camargo is an American actor, ...",
+  "<h1>Dexter (season 1)\n\nThe first season of Dexter is an adaptation of Jeff Lindsay's first novel in a series of the same name, Darkly Dreaming Dexter. ...",
+  "<h1>Chrisstian Camargo</h1>\n\nChristian Camargo is an American actor, producer, writer and director. ... <h2>Early years</h2>\n\nCamargo was born ...",
   "<h1>List of Dexter characters</h1>\n\nThis is a list of characters ... <ul><li>Michael C. Hall</li><li>Maxwell Huckabee (age 3)</li><li>Nicholas Vigneau (young Dexter, season 7)</li> ..."
 ]
 ```
